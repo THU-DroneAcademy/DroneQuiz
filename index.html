@@ -1,0 +1,2240 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ドローン操縦士 資格試験 クイズ</title>
+
+<!-- ===== PWA ===== -->
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ドローンクイズ">
+<meta name="theme-color" content="#00d4ff">
+<link rel="apple-touch-icon" href="icon-192.png">
+<!-- =============== -->
+
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sky: #0a0e1a;
+    --sky-mid: #0d1a2e;
+    --accent: #00d4ff;
+    --accent2: #00ff88;
+    --warn: #ff6b35;
+    --text: #e8f4f8;
+    --text-dim: #7a9ab0;
+    --card: rgba(255,255,255,0.04);
+    --card-border: rgba(0,212,255,0.15);
+    --correct: #00ff88;
+    --incorrect: #ff4757;
+    --radius: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--sky);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Stars background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 30% 40%, rgba(0,212,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 55% 20%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 75% 60%, rgba(0,212,255,0.2) 0%, transparent 100%),
+      radial-gradient(1px 1px at 90% 10%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 20% 80%, rgba(255,255,255,0.2) 0%, transparent 100%),
+      radial-gradient(1px 1px at 85% 85%, rgba(0,255,136,0.2) 0%, transparent 100%),
+      radial-gradient(1px 1px at 45% 70%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 65% 90%, rgba(0,212,255,0.2) 0%, transparent 100%),
+      radial-gradient(1px 1px at 5% 55%, rgba(255,255,255,0.2) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Gradient orbs */
+  body::after {
+    content: '';
+    position: fixed;
+    top: -20%;
+    left: -10%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(0,212,255,0.06) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .orb2 {
+    position: fixed;
+    bottom: -15%;
+    right: -10%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(0,255,136,0.05) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  #app {
+    position: relative;
+    z-index: 1;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ===== HEADER ===== */
+  header {
+    text-align: center;
+    padding: 40px 0 30px;
+  }
+
+  .drone-icon {
+    font-size: 48px;
+    display: block;
+    margin-bottom: 12px;
+    filter: drop-shadow(0 0 20px rgba(0,212,255,0.6));
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+  }
+
+  h1 {
+    font-size: clamp(22px, 5vw, 32px);
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 6px;
+  }
+
+  .subtitle {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  /* ===== START SCREEN ===== */
+  #startScreen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    padding: 20px 0 60px;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    width: 100%;
+    max-width: 480px;
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 20px;
+    text-align: center;
+    transition: all 0.3s;
+  }
+
+  .stat-card:hover {
+    border-color: rgba(0,212,255,0.4);
+    background: rgba(255,255,255,0.06);
+  }
+
+  .stat-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 6px;
+    letter-spacing: 1px;
+  }
+
+  .section-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    max-width: 480px;
+  }
+
+  .section-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 28px;
+    border-radius: var(--radius);
+    border: none;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    letter-spacing: 0.5px;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #0077ff);
+    color: #000;
+    box-shadow: 0 0 30px rgba(0,212,255,0.3);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 0 40px rgba(0,212,255,0.5);
+  }
+
+  .btn-secondary {
+    background: var(--card);
+    color: var(--text);
+    border: 1px solid var(--card-border);
+  }
+
+  .btn-secondary:hover {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(0,212,255,0.4);
+    transform: translateY(-1px);
+  }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    font-size: 13px;
+    padding: 10px 20px;
+  }
+
+  .btn-outline:hover {
+    background: rgba(0,212,255,0.1);
+  }
+
+  .mode-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+    max-width: 480px;
+  }
+
+  /* ===== QUIZ SCREEN ===== */
+  #quizScreen {
+    display: none;
+    flex: 1;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .progress-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .q-counter {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    white-space: nowrap;
+    min-width: 70px;
+  }
+
+  .progress-bar {
+    flex: 1;
+    height: 4px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+
+  .score-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+
+  .category-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 2px;
+    color: var(--accent);
+    border: 1px solid rgba(0,212,255,0.3);
+    padding: 4px 10px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .question-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 28px;
+    animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .question-text {
+    font-size: clamp(15px, 2.5vw, 18px);
+    font-weight: 500;
+    line-height: 1.7;
+    color: var(--text);
+    margin-bottom: 24px;
+  }
+
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .option-btn {
+    width: 100%;
+    text-align: left;
+    padding: 16px 20px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.6;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .option-btn:hover:not(:disabled) {
+    background: rgba(0,212,255,0.08);
+    border-color: rgba(0,212,255,0.3);
+    transform: translateX(3px);
+  }
+
+  .option-btn:disabled {
+    cursor: default;
+  }
+
+  .option-letter {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-dim);
+    min-width: 20px;
+    padding-top: 2px;
+    transition: color 0.2s;
+  }
+
+  .option-btn.correct {
+    background: rgba(0,255,136,0.12);
+    border-color: var(--correct);
+    color: var(--correct);
+  }
+
+  .option-btn.correct .option-letter { color: var(--correct); }
+
+  .option-btn.incorrect {
+    background: rgba(255,71,87,0.12);
+    border-color: var(--incorrect);
+    color: var(--incorrect);
+  }
+
+  .option-btn.incorrect .option-letter { color: var(--incorrect); }
+
+  .option-btn.correct-missed {
+    background: rgba(0,255,136,0.06);
+    border-color: rgba(0,255,136,0.4);
+    color: rgba(0,255,136,0.7);
+  }
+
+  /* Explanation */
+  .explanation {
+    margin-top: 16px;
+    padding: 16px 20px;
+    background: rgba(0,212,255,0.06);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text-dim);
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .explanation strong {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .result-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .result-indicator.ok { color: var(--correct); }
+  .result-indicator.ng { color: var(--incorrect); }
+
+  .nav-area {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 40px;
+  }
+
+  /* ===== RESULT SCREEN ===== */
+  #resultScreen {
+    display: none;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 0;
+    gap: 32px;
+  }
+
+  .result-circle {
+    position: relative;
+    width: 180px;
+    height: 180px;
+  }
+
+  .result-circle svg {
+    transform: rotate(-90deg);
+  }
+
+  .result-circle-bg {
+    fill: none;
+    stroke: rgba(255,255,255,0.06);
+    stroke-width: 10;
+  }
+
+  .result-circle-fill {
+    fill: none;
+    stroke-width: 10;
+    stroke-linecap: round;
+    stroke-dasharray: 502;
+    stroke-dashoffset: 502;
+    transition: stroke-dashoffset 1.5s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+
+  .result-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .result-pct {
+    font-family: 'Space Mono', monospace;
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .result-pct-label {
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  .result-grade {
+    text-align: center;
+  }
+
+  .grade-text {
+    font-size: clamp(28px, 6vw, 42px);
+    font-weight: 900;
+    margin-bottom: 8px;
+  }
+
+  .grade-sub {
+    font-size: 14px;
+    color: var(--text-dim);
+  }
+
+  .result-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    width: 100%;
+    max-width: 480px;
+  }
+
+  .r-stat {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 16px;
+    text-align: center;
+  }
+
+  .r-stat-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 28px;
+    font-weight: 700;
+  }
+
+  .r-stat-num.green { color: var(--correct); }
+  .r-stat-num.red { color: var(--incorrect); }
+  .r-stat-num.blue { color: var(--accent); }
+
+  .r-stat-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  .result-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    max-width: 480px;
+  }
+
+  /* ===== REVIEW SCREEN ===== */
+  #reviewScreen {
+    display: none;
+    flex: 1;
+    flex-direction: column;
+    gap: 16px;
+    padding-bottom: 40px;
+  }
+
+  .review-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+  }
+
+  .review-title {
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .review-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 20px;
+    border-left: 4px solid;
+  }
+
+  .review-card.wrong { border-left-color: var(--incorrect); }
+  .review-card.right { border-left-color: var(--correct); }
+
+  .review-q-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+
+  .review-q-text {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.6;
+    margin-bottom: 12px;
+  }
+
+  .review-answers {
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  .review-your-answer { color: var(--incorrect); }
+  .review-correct-answer { color: var(--correct); }
+  .review-explanation {
+    margin-top: 8px;
+    padding: 10px 14px;
+    background: rgba(0,212,255,0.05);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(0,212,255,0.3); border-radius: 3px; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: rgba(13,26,46,0.95);
+    border: 1px solid var(--card-border);
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-size: 13px;
+    color: var(--text);
+    backdrop-filter: blur(20px);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 100;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ===== BEST SCORES GRID ===== */
+  .best-scores-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .best-score-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 12px 10px;
+    text-align: center;
+    transition: all 0.2s;
+  }
+
+  .best-score-card:hover {
+    border-color: rgba(0,212,255,0.3);
+    background: rgba(255,255,255,0.06);
+  }
+
+  .best-score-card.has-score {
+    border-color: rgba(0,212,255,0.25);
+  }
+
+  .best-score-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .best-score-val.no-data {
+    font-size: 18px;
+    color: rgba(255,255,255,0.2);
+  }
+
+  .best-score-mode {
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+    line-height: 1.3;
+  }
+
+  .best-score-attempts {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: rgba(255,255,255,0.2);
+    margin-top: 3px;
+  }
+
+  /* ===== HISTORY SCREEN ===== */
+  #historyScreen {
+    display: none;
+    flex: 1;
+    flex-direction: column;
+    gap: 16px;
+    padding-bottom: 40px;
+  }
+
+  .history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0 4px;
+  }
+
+  .history-title {
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .history-empty {
+    text-align: center;
+    color: var(--text-dim);
+    padding: 60px 20px;
+    font-size: 14px;
+    line-height: 2;
+  }
+
+  .history-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .history-card:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(0,212,255,0.3);
+    transform: translateX(3px);
+  }
+
+  .history-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .history-date {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  .history-pct {
+    font-family: 'Space Mono', monospace;
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .history-meta {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+  }
+
+  .history-meta span {
+    background: rgba(255,255,255,0.05);
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .history-wrong-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .wrong-pill {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: rgba(255,71,87,0.15);
+    border: 1px solid rgba(255,71,87,0.3);
+    color: var(--incorrect);
+  }
+
+  .wrong-pill.more {
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.1);
+    color: var(--text-dim);
+  }
+
+  /* Weak questions panel */
+  .weak-panel {
+    background: rgba(255,107,53,0.08);
+    border: 1px solid rgba(255,107,53,0.3);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    width: 100%;
+    max-width: 480px;
+  }
+
+  .weak-panel-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--warn);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .weak-panel-sub {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+    line-height: 1.6;
+  }
+
+  .weak-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+
+  .weak-pill-item {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: rgba(255,107,53,0.15);
+    border: 1px solid rgba(255,107,53,0.3);
+    color: var(--warn);
+  }
+
+  /* Per-question accuracy tracker */
+  .accuracy-bar {
+    height: 3px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+
+  .accuracy-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.6s ease;
+  }
+
+  .history-detail-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .history-detail-box {
+    background: #0d1a2e;
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 28px;
+    width: 100%;
+    max-width: 520px;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+  .history-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+  }
+
+  .history-detail-title {
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .btn-close {
+    background: rgba(255,255,255,0.08);
+    border: none;
+    color: var(--text);
+    font-size: 18px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .btn-close:hover { background: rgba(255,255,255,0.15); }
+
+  .detail-q-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .detail-q-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .detail-q-item.wrong-item {
+    background: rgba(255,71,87,0.08);
+    border: 1px solid rgba(255,71,87,0.2);
+  }
+
+  .detail-q-item.right-item {
+    background: rgba(0,255,136,0.05);
+    border: 1px solid rgba(0,255,136,0.15);
+  }
+
+  .detail-q-icon { font-size: 14px; flex-shrink: 0; }
+
+  .tab-bar {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 16px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 10px;
+    padding: 4px;
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 7px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-dim);
+    background: transparent;
+  }
+
+  .tab-btn.active {
+    background: rgba(0,212,255,0.15);
+    color: var(--accent);
+  }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ===== SAVE / RESUME PANEL ===== */
+  .resume-panel {
+    background: rgba(0,212,255,0.06);
+    border: 1px solid rgba(0,212,255,0.35);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    width: 100%;
+    max-width: 480px;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .resume-panel-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .resume-panel-meta {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+    line-height: 1.7;
+  }
+
+  .resume-progress-bar {
+    height: 5px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+
+  .resume-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 3px;
+  }
+
+  .resume-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .save-indicator {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    background: rgba(0,255,136,0.15);
+    border: 1px solid rgba(0,255,136,0.4);
+    color: var(--correct);
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    padding: 5px 12px;
+    border-radius: 20px;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    z-index: 50;
+    pointer-events: none;
+  }
+
+  .save-indicator.show { opacity: 1; }
+
+  @media (max-width: 480px) {
+    .mode-buttons { grid-template-columns: 1fr; }
+    .result-stats { grid-template-columns: repeat(3, 1fr); }
+    .question-card { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="orb2"></div>
+<div id="app">
+  <header>
+    <span class="drone-icon">🚁</span>
+    <h1>ドローン操縦士 資格試験</h1>
+    <p class="subtitle">DRONE PILOT LICENSE QUIZ</p>
+  </header>
+
+  <!-- START SCREEN -->
+  <div id="startScreen">
+    <!-- top row: total attempts -->
+    <div class="stats-grid" style="grid-template-columns:1fr 1fr;margin-bottom:10px">
+      <div class="stat-card">
+        <div class="stat-num">250</div>
+        <div class="stat-label">総問題数</div>
+      </div>
+      <div class="stat-card" style="cursor:pointer" onclick="showHistory()">
+        <div class="stat-num" id="attemptCount">0</div>
+        <div class="stat-label">挑戦回数 →</div>
+      </div>
+    </div>
+
+    <!-- best scores per mode -->
+    <div style="margin-bottom:20px">
+      <div class="section-label" style="margin-bottom:10px">🏆 モード別 最高スコア</div>
+      <div class="best-scores-grid" id="bestScoresGrid"></div>
+    </div>
+
+    <!-- Resume panel (shown when a save exists) -->
+    <div class="resume-panel" id="resumePanel" style="display:none">
+      <div class="resume-panel-title">💾 前回のつづきがあります</div>
+      <div class="resume-panel-meta" id="resumeMeta"></div>
+      <div class="resume-progress-bar">
+        <div class="resume-progress-fill" id="resumeProgressFill" style="width:0%"></div>
+      </div>
+      <div class="resume-actions">
+        <button class="btn btn-primary" style="flex:1" onclick="resumeQuiz()">▶ つづきから再開</button>
+        <button class="btn btn-secondary" style="flex:1" onclick="discardSave()">🗑 最初からやり直す</button>
+      </div>
+    </div>
+
+    <!-- Weak questions panel (shown when data exists) -->
+    <div class="weak-panel" id="weakPanel" style="display:none">
+      <div class="weak-panel-title">🔥 苦手問題</div>
+      <div class="weak-panel-sub" id="weakPanelSub"></div>
+      <div class="weak-pills" id="weakPills"></div>
+      <button class="btn btn-primary" style="width:100%" onclick="startQuiz('weak')">💪 苦手問題を集中練習</button>
+    </div>
+
+    <div class="section-buttons">
+      <div class="section-label">🎯 出題範囲を選択</div>
+      <div class="mode-buttons">
+        <button class="btn btn-primary" onclick="startQuiz('all')">📚 全問題 (250問)</button>
+        <button class="btn btn-secondary" onclick="startQuiz('rand')">🎲 ランダム 25問</button>
+      </div>
+      <div class="mode-buttons">
+        <button class="btn btn-secondary" onclick="startQuiz('cat1')">第1・2章<br><small>導入・安全の基本</small></button>
+        <button class="btn btn-secondary" onclick="startQuiz('cat2')">第3章<br><small>無人航空機の規則</small></button>
+      </div>
+      <div class="mode-buttons">
+        <button class="btn btn-secondary" onclick="startQuiz('cat3')">第4章<br><small>機体・電波・センサー</small></button>
+        <button class="btn btn-secondary" onclick="startQuiz('cat4')">第5章<br><small>操縦者・運航体制</small></button>
+      </div>
+      <div class="mode-buttons">
+        <button class="btn btn-secondary" onclick="startQuiz('cat5')" style="grid-column:1/-1">第6章<br><small>運航上のリスク管理</small></button>
+      </div>
+      <button class="btn btn-outline" style="width:100%;margin-top:4px" onclick="showHistory()">📅 挑戦履歴を見る</button>
+    </div>
+  </div>
+
+  <!-- QUIZ SCREEN -->
+  <div id="quizScreen">
+    <div class="progress-area">
+      <div class="q-counter" id="qCounter">Q1 / 10</div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="score-badge" id="scoreBadge">✓ 0</div>
+    </div>
+    <div class="question-card" id="questionCard">
+      <div class="category-tag" id="categoryTag"></div>
+      <div class="question-text" id="questionText"></div>
+      <div class="options" id="optionsContainer"></div>
+      <div class="explanation" id="explanationBox" style="display:none"></div>
+    </div>
+    <div class="nav-area">
+      <button class="btn btn-outline" onclick="exitQuizWithSave()">← 中断・保存</button>
+      <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display:none">次の問題 →</button>
+    </div>
+  </div>
+
+  <!-- RESULT SCREEN -->
+  <div id="resultScreen">
+    <div class="result-circle">
+      <svg width="180" height="180" viewBox="0 0 180 180">
+        <circle class="result-circle-bg" cx="90" cy="90" r="80"/>
+        <circle class="result-circle-fill" id="resultCircle" cx="90" cy="90" r="80"/>
+      </svg>
+      <div class="result-center">
+        <div class="result-pct" id="resultPct">0%</div>
+        <div class="result-pct-label">正解率</div>
+      </div>
+    </div>
+    <div class="result-grade">
+      <div class="grade-text" id="gradeText"></div>
+      <div class="grade-sub" id="gradeSub"></div>
+    </div>
+    <div class="result-stats">
+      <div class="r-stat">
+        <div class="r-stat-num green" id="resCorrect">0</div>
+        <div class="r-stat-label">正解</div>
+      </div>
+      <div class="r-stat">
+        <div class="r-stat-num red" id="resIncorrect">0</div>
+        <div class="r-stat-label">不正解</div>
+      </div>
+      <div class="r-stat">
+        <div class="r-stat-num blue" id="resTotal">0</div>
+        <div class="r-stat-label">問題数</div>
+      </div>
+    </div>
+    <div class="result-actions">
+      <button class="btn btn-secondary" onclick="showReview()">📋 解説を確認する</button>
+      <button class="btn btn-primary" onclick="restartQuiz()">🔄 もう一度挑戦</button>
+      <button class="btn btn-outline" onclick="goHome()">🏠 ホームに戻る</button>
+    </div>
+  </div>
+
+  <!-- REVIEW SCREEN -->
+  <div id="reviewScreen">
+    <div class="review-header">
+      <div class="review-title">📋 解説一覧</div>
+      <button class="btn btn-outline" onclick="showResult()">← 結果に戻る</button>
+    </div>
+    <div id="reviewContent"></div>
+  </div>
+
+  <!-- HISTORY SCREEN -->
+  <div id="historyScreen">
+    <div class="history-header">
+      <div class="history-title">📅 挑戦履歴</div>
+      <button class="btn btn-outline" onclick="goHome()">← ホームへ</button>
+    </div>
+
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchHistoryTab('list', this)">履歴一覧</button>
+      <button class="tab-btn" onclick="switchHistoryTab('weak', this)">苦手分析</button>
+    </div>
+
+    <div id="historyTabList" class="tab-content active">
+      <div id="historyList"></div>
+    </div>
+
+    <div id="historyTabWeak" class="tab-content">
+      <div id="weakAnalysis"></div>
+    </div>
+  </div>
+</div>
+
+<!-- History Detail Modal -->
+<div id="historyDetailModal" class="history-detail-modal" style="display:none" onclick="closeModal(event)">
+  <div class="history-detail-box">
+    <div class="history-detail-header">
+      <div class="history-detail-title" id="modalTitle"></div>
+      <button class="btn-close" onclick="closeDetailModal()">✕</button>
+    </div>
+    <div id="modalContent"></div>
+    <button class="btn btn-primary" style="width:100%" id="modalRetryBtn">この回の間違いを復習する</button>
+  </div>
+</div>
+
+<!-- PWA インストールバナー -->
+<div id="installBanner" style="
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: linear-gradient(135deg, #0d1a2e, #0a1628);
+  border-top: 1px solid rgba(0,212,255,0.3);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 999;
+  transform: translateY(120px);
+  transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  backdrop-filter: blur(20px);
+">
+  <span style="font-size:28px;flex-shrink:0">🚁</span>
+  <div style="flex:1;min-width:0">
+    <div style="font-size:13px;font-weight:700;color:#e8f4f8;margin-bottom:2px">ホーム画面に追加</div>
+    <div style="font-size:11px;color:#7a9ab0">オフラインでも使えるアプリとして保存できます</div>
+  </div>
+  <button id="installBtn" style="
+    background: linear-gradient(135deg,#00d4ff,#0077ff);
+    border: none; border-radius: 8px;
+    color: #000; font-weight:700; font-size:13px;
+    padding: 8px 16px; cursor:pointer; white-space:nowrap;
+    font-family:'Noto Sans JP',sans-serif;
+  ">追加する</button>
+  <button id="installDismiss" style="
+    background:transparent; border:none;
+    color:#7a9ab0; font-size:20px; cursor:pointer;
+    padding:4px 8px; flex-shrink:0;
+  ">✕</button>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="save-indicator" id="saveIndicator">💾 セーブ済み</div>
+
+<script>
+const QUESTIONS = [
+  { id:1, cat:"第1・2章", q:"無人航空機操縦者技能証明制度において、国が証明する「技能」の定義に含まれる正しい組み合わせはどれか？", opts:["操縦者の視力及び身体能力", "無人航空機を飛行させるのに必要となる知識及び能力", "過去の飛行実績及び機体所有台数"], ans:1, exp:"技能証明制度は、無人航空機を飛行させるのに必要となる一定の技能（知識及び能力）を国が証明するものです。" },
+  { id:2, cat:"第1・2章", q:"登録講習機関の講習を修了し、修了審査に合格した場合に免除される試験はどれか？", opts:["学科試験", "身体検査", "指定試験機関での実地試験"], ans:2, exp:"登録講習機関の講習を修了し修了審査に合格した場合は、指定試験機関での実地試験が免除されます。" },
+  { id:3, cat:"第1・2章", q:"無人航空機操縦者技能証明（免許）の有効期間は何年か？", opts:["2年", "3年", "5年"], ans:1, exp:"一等及び二等の技能証明の有効期間はともに3年です。" },
+  { id:4, cat:"第1・2章", q:"操縦者の役割として、あらゆる状況下で常に第一に考えるべきことはどれか？", opts:["機体の損傷を最小限に抑えること", "飛行計画通りの時間に業務を完了させること", "人の安全を守ること"], ans:2, exp:"操縦者は自覚を持ち、あらゆる状況下で常に人の安全を守ることを第一に考えなければなりません。" },
+  { id:5, cat:"第1・2章", q:"複数の技能証明保持者が現場にいる場合、誰が操縦者であるかについてどうすべきか？", opts:["最も年長者が責任者となる", "飛行前に誰が操縦者なのかを明確にしておく", "トラブルが発生した際にその場で話し合って決める"], ans:1, exp:"混乱を防ぐため、技能証明の保有者が複数いる場合は誰が操縦者なのか飛行前に明確にしておく必要があります。" },
+  { id:6, cat:"第1・2章", q:"補助者を配置する場合の「操縦者の義務」として、教則に記載されている内容はどれか？", opts:["補助者に操縦の代行をさせること", "役割を確認し、連絡手段の確保など安全確認ができる体制を構築すること", "補助者が操縦者の指示を待たずに独自に判断する権限を与えること"], ans:1, exp:"補助者を配置する場合は、役割を必ず確認し、操縦者との連絡手段の確保など安全確認を行える体制を構築しなければなりません。" },
+  { id:7, cat:"第1・2章", q:"無人航空機の事故原因として、「直接的又は間接的な原因」として多発しているものはどれか？", opts:["機体の初期不良", "飛行前の様々な準備不足", "予期せぬ鳥の襲撃"], ans:1, exp:"無人航空機の事故は、飛行前の様々な準備不足が原因となっていることが多いとされています。" },
+  { id:8, cat:"第1・2章", q:"有人航空機と無人航空機の進路が交差、又は接近する場合のルールはどれか？", opts:["速度の速いほうが優先される", "有人航空機の航行の安全を確保するため、無人航空機側が回避する", "有人航空機側が無人航空機を視認して回避する"], ans:1, exp:"有人航空機の航行の安全を確保するため、無人航空機側が回避する行動をとる必要があります。" },
+  { id:9, cat:"第1・2章", q:"飛行に際して「騒音」に関して配慮すべき事項として、正しいものはどれか？", opts:["日中であれば騒音の発生に注意を払う必要はない", "騒音の発生に注意を払う必要がある", "機体が小型であれば騒音対策は不要である"], ans:1, exp:"飛行に際しては、騒音の発生に注意を払うことがルール・マナーとして求められています。" },
+  { id:10, cat:"第1・2章", q:"「無理をしない」判断として、教則が「技術」よりも重要であると説いていることは何か？", opts:["危険な状況を乗り切る操縦技術を磨くこと", "危険な状況になる前にそれを察知して回避すること", "最新の自動回避システムを搭載した機体を選ぶこと"], ans:1, exp:"自然を侮らず、危険な状況を乗り切る技術よりも、危険を事前に回避（中止や帰還）することの方が重要です。" },
+  { id:11, cat:"第1・2章", q:"操縦者が飛行を開始してから終了するまで、全ての過程において問われる責任は何か？", opts:["飛行を安全に成し遂げる責任", "最高高度を記録する責任", "機体の塗装を美しく保つ責任"], ans:0, exp:"操縦者の最も基本的な責任は、飛行を開始してから終了するまで安全に成し遂げることにあります。" },
+  { id:12, cat:"第1・2章", q:"事故により死傷者が発生した場合、操縦者が問われる「刑事責任」の内容はどれか？", opts:["被害者への損害賠償", "業務上過失致死傷罪などによる懲役や罰金", "技能証明の取消処分"], ans:1, exp:"死傷者が発生した場合、事故の内容により業務上過失致死傷罪などの刑事責任（懲役、罰金等）を負う場合があります。" },
+  { id:13, cat:"第1・2章", q:"事故により他人の物件を壊した場合、被害者に対して民法に基づき負う責任はどれか？", opts:["刑事責任", "損害賠償責任（民事責任）", "行政処分"], ans:1, exp:"他人の物件を壊した場合など、操縦者は被害者に対して民法に基づく「損害賠償責任」を負う場合があります。" },
+  { id:14, cat:"第1・2章", q:"航空法違反や重大な過失があった場合に行われる「行政処分」に含まれないものはどれか？", opts:["技能証明の効力の取消", "技能証明の効力の停止", "過失致死罪による禁錮"], ans:2, exp:"航空法違反等の行政処分には、取消、停止、警告、注意が含まれます。禁錮や懲役は刑事責任（罰則）の範囲です。" },
+  { id:15, cat:"第1・2章", q:"技能証明の効力停止処分について、定められている「停止期間」の組み合わせはどれか？", opts:["1ヶ月、2ヶ月、3ヶ月", "3ヶ月、6ヶ月、1年", "6ヶ月、1年、2年"], ans:1, exp:"技能証明の効力停止期間は、1年、6月、3月のいずれかと定められています。" },
+  { id:16, cat:"第1・2章", q:"飛行計画を作成する際、操縦者が考慮すべき事項として不適切なものはどれか？", opts:["操縦者の経験や能力", "無人航空機の性能", "SNS等への投稿による反響の大きさ"], ans:2, exp:"飛行計画は、機体の性能や操縦者の能力、安全対策などを考慮して無理のない内容にする必要があります。" },
+  { id:17, cat:"第1・2章", q:"飛行計画において、何かあった場合の対策として設定しておくべき場所はどれか？", opts:["緊急着陸地点や、安全にホバリング・旋回ができる場所", "最も景色の良い撮影スポット", "機体を購入した販売店の住所"], ans:0, exp:"不測の事態に備え、緊急着陸地点や安全にホバリング・旋回ができる場所を事前に設定しておくことが重要です。" },
+  { id:18, cat:"第1・2章", q:"飛行計画の通報（DIPSへの入力）において、事後の通報が認められるケースはどれか？", opts:["操縦者が通報を忘れていた場合", "あらかじめ通報することが困難な場合（緊急時など）", "インターネット環境が一時的に悪かった場合"], ans:2, exp:"飛行計画は原則事前通報ですが、あらかじめ通報することが困難な場合には事後の通報も認められています。" },
+  { id:19, cat:"第1・2章", q:"飛行予定地域の調査において「日出・日没時刻」を確認する最大の目的は何か？", opts:["夜間飛行の規制に該当するか判断するため", "日中の気温変化を予想するため", "機体の色の見え方を確認するため"], ans:0, exp:"日出前や日没後は夜間飛行の規制対象となるため、正確な時刻の確認が必要です。" },
+  { id:20, cat:"第1・2章", q:"標高（海抜高度）だけでなく、障害物の位置や目標物を確認する主な目的はどれか？", opts:["操縦者の視力をテストするため", "飛行の安全を確保し、飛行状況を把握するため", "地図を新しく作成するため"], ans:1, exp:"飛行状況を正確に把握し、安全を確保するために周囲の地形や障害物を調査します。" },
+  { id:21, cat:"第1・2章", q:"飛行前の機体点検において、確認すべき事項として適切なものはどれか？", opts:["数日前に点検していれば当日は省略してよい", "必ず点検を行い、気になるところがあれば整備してから開始する", "機体ケースのデザインの流行を確認する"], ans:1, exp:"飛行前には必ず点検を行い、不具合や気になるところがあれば整備してから開始しなければなりません。" },
+  { id:22, cat:"第1・2章", q:"収集すべき最新の気象情報に含まれない項目はどれか？", opts:["風向・風速", "警報・注意報", "翌月の長期天気予報"], ans:2, exp:"飛行直前には「最新」の気象情報（天気、風向、警報、注意報等）を収集する必要があります。" },
+  { id:23, cat:"第1・2章", q:"地域情報の収集において、注意すべき「地方公共団体」の規制はどれか？", opts:["独自の条例や規則による飛行制限", "機体登録記号の発行ルール", "操縦者の技能証明の等級分け"], ans:0, exp:"地方公共団体（都道府県・市区町村）が独自に飛行を制限する条例や規則を設けている場合があるため確認が必要です。" },
+  { id:24, cat:"第1・2章", q:"飛行中に連絡体制を確保しておくべき相手（関係機関）の例として正しいものはどれか？", opts:["空港事務所等", "近隣のコンビニエンスストア", "機体のメーカー"], ans:0, exp:"携帯電話等により、空港事務所等の関係機関と常に連絡がとれる体制を確保します。" },
+  { id:25, cat:"第1・2章", q:"操縦者の服装として、安全上「推奨されない」ものはどれか？", opts:["素肌の露出が少ない服装", "サンダルやハイヒール", "関係者であることが容易にわかる服装"], ans:1, exp:"安全のため、動きやすく素肌の露出が少ない服装が推奨されます。サンダルやハイヒールは不適切です。" },
+  { id:26, cat:"第1・2章", q:"操縦者の保護具として、必要に応じて準備すべきものはどれか？", opts:["ヘルメットや保護メガネ", "防弾チョッキ", "厚手のコート"], ans:0, exp:"必要に応じてヘルメットや保護メガネなどの保護具を準備し、安全を確保します。" },
+  { id:27, cat:"第1・2章", q:"体調管理について、事故の原因となりうる「不適切な状態」はどれか？", opts:["十分な睡眠を取った状態", "睡眠不足や疲労が蓄積した状態", "適度な空腹状態"], ans:1, exp:"睡眠不足や疲労による体調不良は、注意力の散漫や判断力の低下を招き事故の原因となります。" },
+  { id:28, cat:"第1・2章", q:"アルコール等の摂取に関する注意事項を守るべき期間はいつか？", opts:["業務で飛行する当日のみ", "特定飛行の許可を受けている間のみ", "操縦者としての自覚を持ち、常に体調管理に努める一環として"], ans:2, exp:"アルコール摂取に関する注意事項を守ることは、操縦者としての自覚を持った体調管理の一環です。" },
+  { id:29, cat:"第1・2章", q:"特定飛行を行う際、携帯が義務付けられている書類の「形式」について正しいものはどれか？", opts:["必ず原本でなければならない", "原本又は写し（電子データを含む）で認められる", "許可等の年月及び番号を暗記していれば携帯不要である"], ans:1, exp:"特定飛行の許可書・承認書等は原本だけでなく写し（電子データを含む）での携行も認められています。" },
+  { id:30, cat:"第1・2章", q:"特定飛行の際に携帯すべき書類に含まれないものはどれか？", opts:["許可書又は承認書", "技能証明書", "住民票の写し"], ans:2, exp:"特定飛行時には許可書等（原本・写し）、技能証明書、飛行日誌を携行（携帯）する必要があります。" },
+  { id:31, cat:"第1・2章", q:"飛行中に天候が悪化しそうになった場合の適切な判断はどれか？", opts:["せっかく準備したので、予定通り飛行を強行する", "ただちに帰還させるか、緊急着陸させる", "機体が見えなくなっても自動飛行を信じて継続する"], ans:1, exp:"気象の変化に注意し、安全を第一に判断して、ただちに帰還させるか緊急着陸させるべきです。" },
+  { id:32, cat:"第1・2章", q:"無人航空機の事故のうち、多発している主な原因はどれか？", opts:["十分な監視を行っていなかったこと", "突然の強い電波干渉", "鳥による意図的な攻撃"], ans:0, exp:"無人航空機の事故のうち、十分に周囲の監視を行っていなかったことが原因となるものが多発しています。" },
+  { id:33, cat:"第1・2章", q:"飛行中の監視において、注意すべき対象物に含まれないものはどれか？", opts:["他の航空機、電柱、高圧線、樹木", "建物、自動車、鳥", "上空の雲の形"], ans:2, exp:"他の航空機、建物、自動車、電柱、高圧線、樹木など、飛行の支障となるあらゆる物体を監視対象とすべきです。" },
+  { id:34, cat:"第1・2章", q:"衝突防止装置を搭載した機体を操縦する際の正しい認識はどれか？", opts:["装置があるため、目視による監視は不要である", "衝突防止装置を過信せず、周囲の監視を最大の安全対策とする", "装置が作動していれば、補助者を配置してはならない"], ans:1, exp:"衝突防止装置を過信せず、周囲の監視を最大の安全対策とすることが重要です。" },
+  { id:35, cat:"第1・2章", q:"補助者を配置する場合のコミュニケーションにおいて配慮すべきことは何か？", opts:["操縦者の集中を妨げないよう、事故が起きるまで話しかけない", "状況把握における誤解や伝達の遅れがないようにする", "専門用語は使わずに世間話をする"], ans:1, exp:"補助者を配置する場合は情報の共有方法を事前に確認し、誤解や伝達遅れがないよう配慮します。" },
+  { id:36, cat:"第1・2章", q:"飛行後の点検において、確認すべき事項はどれか？", opts:["機体に不具合がないか点検し、次回の飛行に備える", "その日の飛行映像をすべて削除する", "保険の解約手続きを行う"], ans:0, exp:"飛行後は機体の不具合を点検し、手入れをして次回の飛行に備えます。" },
+  { id:37, cat:"第1・2章", q:"飛行終了後の機体やバッテリーの適切な保管方法はどれか？", opts:["高温多湿な場所に放置する", "安全な状態で、適切な場所に保管する", "満充電のまま長期間放置する"], ans:1, exp:"飛行終了後は、機体やバッテリー等を安全な状態で、適切な場所に保管しなければなりません。" },
+  { id:38, cat:"第1・2章", q:"特定飛行を行った場合、作成（記載）が義務付けられている書類はどれか？", opts:["日記", "飛行日誌", "収支報告書"], ans:1, exp:"特定飛行を行った場合には、航空法に基づき飛行日誌の記載が義務付けられています。" },
+  { id:39, cat:"第1・2章", q:"飛行日誌に記載すべき「3つの記録」の組み合わせとして正しいものはどれか？", opts:["飛行記録、日常点検記録、点検整備記録", "飛行記録、写真撮影記録、交通費記録", "離着陸時刻、操縦者の住所、天候の推移"], ans:0, exp:"飛行日誌には、飛行記録、日常点検記録、点検整備記録の3つを記載します。" },
+  { id:40, cat:"第1・2章", q:"特定飛行に該当しない飛行であっても、飛行日誌の作成はどうすべきか？", opts:["作成してはならない", "記載することが望ましい", "法的に禁止されている"], ans:1, exp:"特定飛行に該当しない場合でも、安全管理のために飛行日誌に記載することが望ましいとされています。" },
+  { id:41, cat:"第1・2章", q:"事故を起こした際、最初に行うべき行動（第一優先）はどれか？", opts:["国土交通大臣への報告", "人の安全確認（負傷者の救護）", "機体の修理代を計算する"], ans:1, exp:"事故発生時は慌てず落ち着いて、負傷者の救護などの人の安全確認を最優先で行います。" },
+  { id:42, cat:"第1・2章", q:"機体が墜落し、通電している場合に講ずべき措置はどれか？", opts:["そのまま放電するまで待つ", "速やかに電源を切るなど、危険防止の措置を講ずる", "水の中に入れて冷却する"], ans:1, exp:"墜落した機体が通電している場合は、二次被害（発火等）を防ぐため速やかに電源を切るなどの措置を講じます。" },
+  { id:43, cat:"第1・2章", q:"プロペラがまだ回転している墜落機に近づく際の注意点はどれか？", opts:["素手でプロペラを止める", "不用意に機体に接近せず十分に注意する", "回転している方が安全である"], ans:1, exp:"回転中のプロペラは非常に危険なため、不用意に機体に接近せず十分に注意を払う必要があります。" },
+  { id:44, cat:"第1・2章", q:"事故の原因究明や再発防止のために残しておくべきものはどれか？", opts:["飛行ログ等の記録", "操縦者の当日の服装の写真", "機体を購入した際の領収書"], ans:0, exp:"事故の原因究明と再発防止のために、飛行ログ等の記録を残しておくことが重要です。" },
+  { id:45, cat:"第1・2章", q:"事故発生時の通報先として、内容に応じて連絡すべき機関はどこか？", opts:["警察署、消防署、国土交通大臣など", "最寄りの郵便局", "機体メーカーのカスタマーセンターのみ"], ans:0, exp:"事故内容に応じ警察・消防等の関係機関へ連絡するとともに、国土交通大臣への報告が義務付けられています。" },
+  { id:46, cat:"第1・2章", q:"無人航空機における「自賠責」のような強制保険の有無について正しいものはどれか？", opts:["自動車と同様に、法律で加入が義務付けられている", "強制保険はなく、すべて任意保険である", "カテゴリーII飛行なら強制保険がある"], ans:1, exp:"無人航空機には自賠責のような強制保険はなく、すべて任意保険です。" },
+  { id:47, cat:"第1・2章", q:"事故の際の金銭的負担に備えて、加入が推奨される保険はどれか？", opts:["生命保険のみ", "賠償責任保険などの任意保険", "機体盗難保険のみ"], ans:1, exp:"万一の際の金銭的負担が大きいため、賠償責任保険などの保険に加入しておくことが強く推奨されます。" },
+  { id:48, cat:"第1・2章", q:"技能証明（免許）試験に関して「不正の行為」があった場合の処分はどれか？", opts:["合格を無効にし、一定期間の受験を拒否することができる", "厳重注意のみで合格は有効となる", "100万円以下の罰金刑のみ"], ans:0, exp:"技能証明試験での不正行為は、合格の無効や一定期間の受験拒否処分の対象となります。" },
+  { id:49, cat:"第1・2章", q:"身体状態に応じて付された「条件（眼鏡等）」に違反して飛行させた場合の扱いは？", opts:["マナー違反だが、航空法違反ではない", "条件の範囲外での特定飛行となり、違反（行政処分対象）となる", "機体認証の違反となる"], ans:1, exp:"免許に付された条件（眼鏡等）に違反して飛行させることは、特定飛行のルール違反（行政処分対象）となります。" },
+  { id:50, cat:"第1・2章", q:"技能証明の「有効期間の更新」を申請する場合、いつまでに講習を修了すべきか？", opts:["有効期間が満了する日の 3ヶ月以内", "更新を申請する日前 3ヶ月以内", "いつでもよい"], ans:1, exp:"技能証明の更新には、更新申請の日前3ヶ月以内に「更新講習」を修了している必要があります。" },
+  { id:1, cat:"第3章", q:"航空法における「無人航空機」の重量の定義として、正しいものはどれか？", opts:["機体本体の重量に、バッテリー及びプロペラガード等の付属品をすべて含めた重量。", "機体本体の重量とバッテリーの重量の合計重量。", "離陸時に機体から取り外し可能なカメラ等のペイロードを含めた最大離陸重量。"], ans:1, exp:"航空法における無人航空機の重量は、「無人航空機本体の重量及びバッテリーの重量の合計」を指します。プロペラガードなどの取り外し可能な付属品は含まれません。" },
+  { id:2, cat:"第3章", q:"航空法上の「無人航空機」に該当しないものはどれか？", opts:["遠隔操作が可能で、機体本体とバッテリーの合計が150gのマルチローター。", "プログラムにより自動操縦が可能で、重量が200gの固定翼機。", "ゴムの動力で飛行し、操縦者が飛行を制御する装置を有しない重量120gの飛行機。"], ans:2, exp:"無人航空機の定義には「遠隔操作又は自動操縦により飛行させることができるもの」が含まれます。ゴム動力で制御装置を持たないものは、この定義から外れます。" },
+  { id:3, cat:"第3章", q:"無人航空機の「登録制度」において、登録の有効期間は何年か？", opts:["1年", "3年", "5年"], ans:1, exp:"無人航空機登録制度において、機体登録の有効期間は「３年」です。有効期間ごとに更新が必要です。" },
+  { id:4, cat:"第3章", q:"登録記号の表示において、最大離陸重量25kg未満の機体に義務付けられる文字の高さは？", opts:["3mm以上", "5mm以上", "10mm以上"], ans:0, exp:"最大離陸重量 25kg 未満の機体の場合、登録記号の文字の高さは「3mm 以上」で表示する必要があります。" },
+  { id:5, cat:"第3章", q:"登録記号の表示において、最大離陸重量25kg以上の機体に義務付けられる文字の高さは？", opts:["10mm以上", "20mm以上", "25mm以上"], ans:2, exp:"最大離陸重量 25kg 以上の機体の場合、登録記号の文字の高さは「25mm 以上」で表示する必要があります。" },
+  { id:6, cat:"第3章", q:"リモートID機能から発信される「動的情報」に含まれないものはどれか？", opts:["機体の位置（緯度・経度）", "機体の登録記号及び製造番号", "機体の速度、高度、及び時刻"], ans:1, exp:"リモートIDの「動的情報」には、位置、速度、高度、時刻が含まれます。登録記号や製造番号は「静的情報」に分類されます。" },
+  { id:7, cat:"第3章", q:"リモートID情報の送出頻度として、教則に定められている基準はどれか？", opts:["1分に1回以上", "10秒に1回以上", "1秒に1回以上"], ans:2, exp:"リモートID情報は、原則として「１秒に１回以上」発信される必要があります。" },
+  { id:8, cat:"第3章", q:"リモートID機能の搭載が「免除」されないケースはどれか？", opts:["十分な強度を有する30m以下の紐等により係留して飛行させる場合。", "機体登録制度の施行（2022年6月19日）までの事前登録期間中に登録した機体。", "特定飛行の許可・承認を受け、二等技能証明を保有して飛行させる場合。"], ans:2, exp:"技能証明の保有だけではリモートIDは免除されません。免除されるのは、事前登録機、特定区域内、30m以内の係留、または秘匿業務（警察等）の場合です。" },
+  { id:9, cat:"第3章", q:"特定飛行のうち、原則として事前の許可・承認を必要としない「カテゴリーI飛行」の定義は？", opts:["特定飛行に該当しない、リスクの低い飛行。", "二等技能証明と第二種機体認証により、DID上空を目視内で飛行させること。", "機体登録が完了しており、100g未満の機体を室内で飛行させること。"], ans:0, exp:"特定飛行（航空法で規制される空域や方法）に該当しない飛行が「カテゴリーⅠ飛行」であり、特段の手続きは不要です。" },
+  { id:10, cat:"第3章", q:"特定の手続きなくDID（人口集中地区）等の特定飛行が可能になる「カテゴリーIIB飛行」の条件は？", opts:["一等技能証明を保有し、第一種機体認証を受けた機体を使用すること。", "二等技能証明を保有し、第二種機体認証を受けた機体を使用し、飛行マニュアルを遵守すること。", "補助者を配置し、機体登録を済ませた25kg未満の機体を使用すること。"], ans:1, exp:"「二等技能証明」を保有し、「第二種機体認証」を受けた機体を使用し、「飛行マニュアル」を遵守する場合、DIDや30m距離、夜間、目視内の特定飛行（カテゴリーⅡB）が申請不要となります。" },
+  { id:11, cat:"第3章", q:"航空法上の「カテゴリーIII飛行」の説明として、正しいものはどれか？", opts:["立入管理措置を講じた上で行う、有人地帯での目視外飛行。", "第三者上空において、立入管理措置を講じないで行う特定飛行。", "空港周辺等の極めてリスクの高い空域で行う、立入管理措置を講じた飛行。"], ans:1, exp:"「カテゴリーⅢ飛行」とは、立入管理措置を講じないで行う特定飛行、すなわち第三者上空での飛行を指します。" },
+  { id:12, cat:"第3章", q:"地表又は水面から150m以上の高さの空域であっても、飛行禁止空域から「除外」される特例は？", opts:["高層ビルや煙突などの構造物の周辺30m以内の空域である場合。", "周囲に航空機がいないことを補助者が目視で常時監視している場合。", "二等技能証明の限定解除（目視外飛行）を保有している場合。"], ans:0, exp:"煙突や鉄塔などの高層の構造物から「30m 以内の空域」については、150m 以上の高さであっても、航空機の飛行が想定されないため禁止空域から除外されます。" },
+  { id:13, cat:"第3章", q:"人口集中地区（DID）の判定基準となる「国勢調査」は、何年ごとに実施されるか？", opts:["3年ごと", "5年ごと", "10年ごと"], ans:1, exp:"人口集中地区（DID）は、総務省が実施する「国勢調査」の結果に基づき、「５年毎」に設定・更新されます。" },
+  { id:14, cat:"第3章", q:"航空法における「夜間」の定義として、正しいものはどれか？", opts:["午後6時から翌朝6時までの間。", "日没から日出までの間（国立天文台の発表に基づく）。", "日没の30分後から、日出の30分前までの間。"], ans:1, exp:"航空法における「夜間」とは、「日没から日出まで」の時間を指します。これは国立天文台が発表する時刻に基づきます。" },
+  { id:15, cat:"第3章", q:"「目視による常時監視」の定義において、認められない監視方法はどれか？", opts:["自分自身の目で直接見ること（眼鏡やコンタクトレンズの使用を含む）。", "機体に搭載されたカメラの映像をモニターやFPVゴーグルで確認すること。", "バッテリー残量確認等のために、一時的に短時間だけ機体から目を離すこと。"], ans:1, exp:"「目視による常時監視」は自分の目で直接見ること（眼鏡・コンタクト可）を指し、モニターや FPV ゴーグル越しに機体を見る行為は「目視外飛行」に該当します。" },
+  { id:16, cat:"第3章", q:"第三者又は第三者の物件との間で保つべき「30m以上の距離」とは、どこの距離を指すか？", opts:["機体と人・物件との間の水平距離。", "機体と人・物件との間の直線距離。", "機体の直下の地上点から、人・物件までの距離。"], ans:1, exp:"人や物件との間に保つべき 30m 以上の距離とは、「無人航空機と人又は物件との間の直線距離」を指します。" },
+  { id:17, cat:"第3章", q:"航空法上の「物件」に含まれず、30mの距離確保の規制対象外となるものはどれか？", opts:["電柱、電線、及び街灯。", "土地、及び自然物（樹木、雑草等）。", "第三者が所有する自動車や船舶。"], ans:1, exp:"航空法上の「物件」には、車両や工作物（電柱、電線、ビル等）が含まれますが、「土地や自然物（樹木、雑草等）」は含まれません。" },
+  { id:18, cat:"第3章", q:"「多数の者の集合する催し（イベント）」に該当するかどうかの判断基準はどれか？", opts:["主催者の意図にかかわらず、10人以上の人が集まれば一律に該当する。", "特定の場所や日時に開催されるかどうかによって、総合的に判断される。", "信号待ちや混雑により自然発生的に生じた人混みは、常に該当する。"], ans:1, exp:"「多数の者の集合する催し」かどうかは、人数だけでなく、特定の場所や日時に開催されるもの（祭礼、縁日等）であるかによって総合的に判断されます。" },
+  { id:19, cat:"第3章", q:"多数の者の集合する催しが行われている場所の上空で飛行を中止すべき風速の基準は？", opts:["風速3m/s以上", "風速5m/s以上", "風速10m/s以上"], ans:1, exp:"多数の者が集合する催しの上空で飛行させる場合、安全のため「風速 5m/s 以上」の場合は飛行を中止しなければなりません。" },
+  { id:20, cat:"第3章", q:"無人航空機による「危険物の輸送」において、輸送禁止の対象「外」となるものはどれか？", opts:["機体を作動させるために必要な燃料やバッテリー、カメラ用の電池。", "撮影演出用の花火やクラッカー。", "農薬散布目的以外で、予備として搭載する農薬。"], ans:0, exp:"機体を作動させるために必要な燃料やバッテリー、カメラ用の電池などは、輸送が禁止される「危険物」の対象とはなりません。" },
+  { id:21, cat:"第3章", q:"「物件の投下」に該当「しない」行為は、次のうちどれか？", opts:["農薬を霧状にして空中から散布する行為。", "輸送した荷物を、機体から切り離して地表に落下させる行為。", "輸送した荷物を、着陸させて地表に置く、又は地上の人員に手渡す行為。"], ans:2, exp:"物件を落下させるのではなく、着陸させて地表に置いたり、直接手渡したりする行為は「物件の投下」には含まれません。" },
+  { id:22, cat:"第3章", q:"「捜索・救助のための特例」が適用される可能性がある主体の組み合わせはどれか？", opts:["国や地方公共団体、又はこれらから依頼を受けた者。", "すべての民間企業、及び個人ボランティア団体。", "機体認証を受けた機体を使用する、すべての技能証明保持者。"], ans:0, exp:"特例が適用されるのは「国や地方公共団体、又はこれらから依頼を受けた者」が、緊急の捜索や救助を目的として飛行させる場合に限られます。" },
+  { id:23, cat:"第3章", q:"十分な強度を有する紐等（30m以下）で係留して飛行させる際、免除「されない」手続きはどれか？", opts:["人口集中地区（DID）での飛行の許可。", "目視外飛行の承認。", "空港周辺や150m以上の空域での飛行の許可。"], ans:2, exp:"30m以下の紐で係留する場合、DID、夜間、目視外、30m距離、物件投下の手続きは不要になりますが、空港周辺や150m以上の禁止空域での飛行許可は免除されません。" },
+  { id:24, cat:"第3章", q:"航空法上の「第三者」の定義に含まれる者はどれか？", opts:["無人航空機の飛行の安全確保に必要な補助者。", "映画の空撮において、操縦者から安全指示を受け同意している出演者。", "ドローンショーを会場付近の公道から眺めている一般の通行人。"], ans:2, exp:"「第三者」とは、飛行に直接的・間接的に関与していない者を指します。会場付近の公道から眺めているだけの通行人は第三者に該当します。" },
+  { id:25, cat:"第3章", q:"「レベル3.5飛行」において、看板の設置等の立入管理措置を代替できるものはどれか？", opts:["機体の大きなエンジン音とスピーカーによる警告。", "デジタル技術（機上カメラ）による歩行者等の有無の確認。", "機体を時速50km以上の高速で飛行させ、通過時間を短縮すること。"], ans:1, exp:"レベル 3.5 飛行は、機上カメラを活用して飛行経路下が無人であることを確認することで、看板設置や補助者の配置といった立入管理措置を代替するものです。" },
+  { id:26, cat:"第3章", q:"操縦者のアルコール摂取に関する制限として、教則に明記されている内容はどれか？", opts:["呼気1Lあたり0.15mg未満であれば、操縦してもよい。", "体内に保有するアルコールの程度の如何にかかわらず、アルコールを保有する状態では飛行を行ってはならない。", "業務以外のレジャー飛行であれば、少量（ビール1缶程度）の飲酒は認められる。"], ans:1, exp:"アルコールによる影響は体質や体調に左右されるため、微量であっても「アルコールを保有する状態」での飛行は禁止されています。" },
+  { id:27, cat:"第3章", q:"航空機又は他の無人航空機との衝突を防止するための行動として、正しいものはどれか？", opts:["飛行中に航行中の航空機を確認した場合には、そのままの経路で加速して通過する。", "飛行前又は飛行中に航行中の航空機を確認した場合には、飛行を行わない、又は降下させる等の措置をとる。", "他の無人航空機を確認した場合は、後から離陸した機体が常に優先される。"], ans:1, exp:"飛行前や飛行中に航空機を確認した場合は、接近を避けるため「飛行を行わない、又は地上に降下させる」などの適切な措置をとる必要があります。" },
+  { id:28, cat:"第3章", q:"航空法上の「事故」に該当し、直ちに報告しなければならない事態はどれか？", opts:["無人航空機により、人が「重傷」以上の負傷を負った場合。", "飛行中、バッテリーが切れて予定外の場所に着地したが、損害はなかった場合。", "操縦者が所有し管理する物件を、自機の接触により破損させた場合。"], ans:0, exp:"航空法上の事故には「人の重傷（以上）の負傷」が含まれます。軽傷や無傷の場合は、内容により重大インシデントに該当するか判断されます。" },
+  { id:29, cat:"第3章", q:"「物件の損壊」による事故の報告対象となる範囲として、正しいものはどれか？", opts:["損害額が10万円を超える場合のみ。", "第三者の所有物であれば、損傷の規模や損害額を問わずすべて。", "国が指定した重要文化財を損壊した場合のみ。"], ans:1, exp:"物件の損壊事故については、「第三者の所有物」であれば、損傷の規模や損害額を問わず、すべての損傷が報告対象となります。" },
+  { id:30, cat:"第3章", q:"重大インシデント（事故のおそれがある事態）に含まれないものはどれか？", opts:["飛行中の無人航空機の制御が不能となった事態。", "無人航空機が「飛行中」に発火した事態。", "機体が木に引っかかり、回収の際にプロペラが折れた事態。"], ans:2, exp:"重大インシデントには衝突のおそれ、重傷に至らない負傷、制御不能、飛行中の発火が含まれます。回収時の破損は飛行中の事態ではないため該当しません。" },
+  { id:31, cat:"第3章", q:"特定飛行を行う者が、事前に通報（登録）しなければならない「飛行計画」の内容に含まれないものはどれか？", opts:["飛行の日時、経路、高度、速度。", "立入管理措置の有無及びその内容。", "機体の購入金額と購入店名。"], ans:2, exp:"飛行計画には、日時、経路、高度、速度、立入管理措置、保険内容などを記載しますが、機体の購入金額などは含まれません。" },
+  { id:32, cat:"第3章", q:"通報した「飛行計画」について、国土交通大臣が安全確保のために指示できる内容はどれか？", opts:["特定飛行の日時又は経路の変更など。", "使用する送信機のメーカーの変更。", "操縦者の服装の色の指定。"], ans:0, exp:"国土交通大臣は、安全確保のために必要があると認めるときは、飛行の日時や経路の変更を指示することができます。" },
+  { id:33, cat:"第3章", q:"特定飛行を行った場合、飛行日誌に記載しなければならない3つの記録はどれか？", opts:["飛行記録、日常点検記録、点検整備記録。", "離着陸時刻、最高速度、操縦者の昼食内容。", "飛行許可番号、保険証券番号、機体購入日。"], ans:0, exp:"特定飛行を行う際の飛行日誌には、「飛行記録」「日常点検記録」「点検整備記録」の３つを遅滞なく記載する義務があります。" },
+  { id:34, cat:"第3章", q:"機体認証を受けた無人航空機の使用者が遵守すべき「整備の義務」とは何か？", opts:["毎日必ず全パーツを分解清掃すること。", "機体メーカーが定める取扱説明書（整備手順書）等に従って整備すること。", "故障するまでは整備を行わなくてよい。"], ans:1, exp:"機体認証を受けた機体の使用者は、メーカーが定める「無人航空機整備手順書（取扱説明書）」等に従って整備をすることが義務付けられています。" },
+  { id:35, cat:"第3章", q:"事故が発生した際に「負傷者の救護」等の危険防止措置を講じなかった場合の罰則は？", opts:["1年以下の懲役又は30万円以下の罰金。", "2年以下の懲役又は100万円以下の罰金。", "50万円以下の罰金のみ。"], ans:1, exp:"事故発生時に負傷者の救護などの危険防止措置を講じなかった場合、最も重い「２年以下の懲役又は 100 万円以下の罰金」に処せられる可能性があります。" },
+  { id:36, cat:"第3章", q:"「アルコール又は薬物の影響下」で無人航空機を飛行させた場合の罰則は？", opts:["1年以下の懲役又は30万円以下の罰金。", "2年以下の懲役又は100万円以下の罰金。", "10万円以下の罰金。"], ans:0, exp:"アルコール又は薬物の影響下で無人航空機を飛行させた場合は、「１年以下の懲役又は 30 万円以下の罰金」の対象となります。" },
+  { id:37, cat:"第3章", q:"特定飛行において「飛行日誌」を備えなかった、又は虚偽の記載をした場合の罰則は？", opts:["50万円以下の罰金", "30万円以下の罰金", "10万円以下の罰金"], ans:2, exp:"特定飛行において飛行日誌を備えなかった、あるいは記載漏れや虚偽記載をした場合は、「10 万円以下の罰金」の対象となります。" },
+  { id:38, cat:"第3章", q:"「登録を受けていない」無人航空機を飛行させた場合の罰則は？", opts:["1年以下の懲役又は50万円以下の罰金。", "50万円以下の罰金のみ。", "10万円以下の罰金。"], ans:0, exp:"登録を受けていない無人航空機を飛行させた場合は、「１年以下の懲役又は 50 万円以下の罰金」に処せられる可能性があります。" },
+  { id:39, cat:"第3章", q:"技能証明の行政処分における点数制度において、即座に「取消（15点）」となる違反はどれか？", opts:["技能証明書の不携帯。", "事故が発生した場合に危険防止措置を講じない。", "飛行計画を通報せずに特定飛行を行った。"], ans:1, exp:"行政処分の点数制度において、「事故が発生した場合に危険防止措置を講じない」行為は 15 点となり、即座に技能証明の取消対象となります。" },
+  { id:40, cat:"第3章", q:"技能証明の「停止」処分を受ける場合の、停止期間として正しい組み合わせはどれか？", opts:["1年、6月、3月のいずれか。", "6月、3月、1月のいずれか。", "常に一律で6月。"], ans:0, exp:"技能証明の効力停止処分の期間は、「１年、6 月、3 月」のいずれかと定められています。" },
+  { id:41, cat:"第3章", q:"小型無人機等飛行禁止法の対象となる「重要施設」に含まれないものはどれか？", opts:["国会議事堂、内閣総理大臣官邸、皇居。", "地方公共団体が管理するすべての小・中学校。", "原子力事業所、及び防衛大臣が指定する自衛隊施設。"], ans:1, exp:"小型無人機等飛行禁止法の重要施設には、国会議事堂、総理官邸、最高裁判所、皇居、原子力事業所等が含まれますが、一般の小中学校は一律には含まれません。" },
+  { id:42, cat:"第3章", q:"小型無人機等飛行禁止法において、飛行が禁止される範囲（イエローゾーン）は重要施設の周囲約何メートルか？", opts:["100m", "300m", "500m"], ans:1, exp:"小型無人機等飛行禁止法では、重要施設の敷地（レッドゾーン）及びその周囲「おおむね 300m」の地域（イエローゾーン）が飛行禁止となります。" },
+  { id:43, cat:"第3章", q:"小型無人機等飛行禁止法における「レッド・ゾーン（敷地上空）」での飛行について、正しい記述はどれか？", opts:["100g未満の模型航空機であれば、通報のみで自由に飛行できる。", "土地の所有者であっても、防衛施設や空港の場合は管理者の同意が必要である。", "都道府県公安委員会への事前通報は、レッド・ゾーンであれば不要である。"], ans:1, exp:"レッドゾーン（敷地上空）では、たとえ土地の所有者であっても、防衛関係施設や空港の場合は管理者の同意がなければ飛行できません。" },
+  { id:44, cat:"第3章", q:"日本国内で無人航空機の操縦に使用する無線機について、確認すべきマークはどれか？", opts:["JISマーク", "技適マーク（技術基準適合証明等の表示）", "エコマーク"], ans:1, exp:"国内の無線局として使用する場合、電波法に定める技術基準に合致していることを示す「技適マーク」が表示されている必要があります。" },
+  { id:45, cat:"第3章", q:"「アマチュア無線」を使用した無人航空機の運用について、正しいものはどれか？", opts:["仕事などの金銭上の利益を目的とした業務に利用できる。", "専ら個人的な興味により行う自己訓練や技術研究のために限られる。", "無線従事者免許がなくても、出力が小さければ利用できる。"], ans:1, exp:"アマチュア無線は、個人的な趣味や研究のためのものであり、利益を目的とした仕事などの「業務」に利用することはできません。" },
+  { id:46, cat:"第3章", q:"携帯電話を機体に搭載して（SIMを挿入して）上空で利用する場合に必要な手続きはどれか？", opts:["手続きは一切不要で、通常のスマホプランのまま利用できる。", "携帯電話事業者が提供する条件に対応した上空用プラン等の利用手続が必要である。", "一級陸上無線技術士の資格取得が必須である。"], ans:1, exp:"携帯電話（SIM）を機体に乗せて上空利用する場合は、既設の無線局に支障を与えないよう、携帯電話事業者が提供する専用プラン等の契約・手続きが必要です。" },
+  { id:47, cat:"第3章", q:"災害発生時などに「緊急用務空域」が指定された場合の公示方法として、正しいものはどれか？", opts:["各世帯への戸別訪問による通知。", "国土交通省のホームページやX（旧Twitter）での公示。", "テレビのニュース番組での全地点の詳細放送。"], ans:1, exp:"緊急用務空域が指定された場合は、国土交通省のホームページや X（旧 Twitter）等を通じて迅速に公示されます。" },
+  { id:48, cat:"第3章", q:"航空交通管制圏での飛行において、無人航空機の操縦者が従わなければならない指示は誰のものか？", opts:["土地の所有者", "航空交通管制機関", "機体メーカーのサポートセンター"], ans:1, exp:"航空交通管制圏を飛行するすべての航空機（及び無人航空機）は、「航空交通管制機関」からの指示を遵守しなければなりません。" },
+  { id:49, cat:"第3章", q:"技能証明試験において「不正の行為」があった場合、どのような処分が下されるか？", opts:["試験を停止、または合格を無効にし、一定期間の受験を拒否できる。", "厳重注意のみで、合格はそのまま有効となる。", "一等技能証明の取得を永久に禁止される。"], ans:0, exp:"技能証明試験において不正行為があった場合、試験の停止や合格の無効、及び一定期間の受験拒否処分が下されることがあります。" },
+  { id:50, cat:"第3章", q:"身体状態に応じて付された「条件（眼鏡等）」に違反して特定飛行を行った場合の扱いは？", opts:["マナー違反ではあるが、航空法違反にはならない。", "条件の範囲外での特定飛行となり、違反（行政処分等の対象）となる。", "機体認証の基準に適合しないものとみなされる。"], ans:1, exp:"免許に付された身体条件（眼鏡等）に違反して特定飛行を行うことは、航空法に基づく条件違反（行政処分等の対象）となります。" },
+  { id:1, cat:"第4章", q:"飛行機（固定翼機）の安定性に関する記述として正しいものはどれか？", opts:["回転翼航空機と同様、常に電子的な姿勢制御装置がなければ飛行安定を維持できない。", "適切な機体設計がなされていれば、無操縦・無制御の状態でも飛行安定が達成できる。", "重心位置が揚力中心より大幅に後方にある場合に、最も飛行が安定する。"], ans:1, exp:"飛行機は適切な設計（上反角や重心位置等）により、制御なしでも安定する「静的安定性」を持たせることが可能です。" },
+  { id:2, cat:"第4章", q:"飛行機において「失速（ストール）」が発生する主な原因はどれか？", opts:["飛行速度が音速を超え、衝撃波が発生すること。", "迎角（アタックアングル）を大きくしすぎ、翼表面から空気が剥離すること。", "スロットルを全開にし、エンジン（モーター）の回転数が限界を超えること。"], ans:1, exp:"迎角が大きくなりすぎると翼表面の気流が剥離し、揚力を失う「失速」が発生します。" },
+  { id:3, cat:"第4章", q:"ヘリコプターにおいて、メインローターのピッチ角を周期的に変化させて機体のピッチやロールを制御する機構を何と呼ぶか？", opts:["スワッシュプレート", "テールローター", "ESC（スピードコントローラー）"], ans:0, exp:"ヘリコプターはスワッシュプレートにより、メインローターのピッチ角を制御して姿勢を変えます。" },
+  { id:4, cat:"第4章", q:"マルチローター（回転翼航空機）における反トルクの相殺方法として、一般的なものはどれか？", opts:["全てのプロペラを同じ向きに回転させ、ジャイロセンサで補正する。", "偶数個のプロペラを半数ずつ異なる向き（時計回りと反時計回り）に回転させる。", "垂直尾翼を斜めに取り付け、空気抵抗によって打ち消す。"], ans:1, exp:"マルチローターはプロペラを逆方向に回転させることで反トルクを打ち消し、回転バランスを保ちます。" },
+  { id:5, cat:"第4章", q:"マルチローターのローター数と機体性能の関係について、正しい記述はどれか？", opts:["ローターの数が少ないほど（例：4枚）、1つのモーターが故障した際の安全性は高まる。", "モーター性能が同一であれば、ローターの数が多いほど故障に対する耐性が向上し、ペイロードも増える。", "ローターの数が増えると空気抵抗が激増するため、いかなる場合も飛行時間は短くなる。"], ans:1, exp:"ローター数が多いほど、一部のモーター故障時でも姿勢を維持できる冗長性が高まります。" },
+  { id:6, cat:"第4章", q:"マルチローターが「エルロン操作（右移動）」を行う際のローター制御はどれか？", opts:["機体右側のローター回転数を上げ、左側の回転数を下げる。", "機体左側のローター回転数を上げ、右側の回転数を下げることで機体を右に傾ける。", "全てのローターの回転数を均一に上げつつ、ラダー（旋回）操作を加える。"], ans:1, exp:"右へ移動するには機体を右に傾ける必要があり、左側の推力を上げ、右側の推力を下げる制御を行います。" },
+  { id:7, cat:"第4章", q:"夜間飛行において、機体の「ビジョンセンサー」を利用する際の注意点はどれか？", opts:["ビジョンセンサーは超音波を使用するため、光量に関わらず夜間でも昼間と同じ精度で作動する。", "暗所ではセンサーが周囲を正しく認識できず、衝突回避や姿勢安定機能が使用できない可能性がある。", "夜間飛行の承認を受けていれば、センサーが作動していなくても機体認証の効力には影響しない。"], ans:1, exp:"カメラ等を用いたビジョンセンサーは視覚情報に頼るため、夜間は正常に機能しないリスクがあります。" },
+  { id:8, cat:"第4章", q:"補助者を配置せずに「目視外飛行」を行う機体に求められる、安全性を高めるための追加要件はどれか？", opts:["航空機からの視認性を高めるための灯火、または認識しやすい塗色を施すこと。", "機体にパラシュートを装備し、常に最高速度の 50% 以下で飛行すること。", "機体登録記号を通常の 20mm 以上の大きさで、機体下面にのみ表示すること。"], ans:0, exp:"補助者なし目視外飛行では、有人機等からの視認性を高める灯火や塗色が義務付けられます。" },
+  { id:9, cat:"第4章", q:"空気の中を移動する翼に対して、流れと「垂直方向」に作用する力を何と呼ぶか？", opts:["推力", "抗力", "揚力"], ans:2, exp:"空気の流れに対して垂直に働く力が揚力、流れの方向に働く力が抗力です。" },
+  { id:10, cat:"第4章", q:"翼の前縁と後縁を結ぶ「翼弦（コード）」と、空気の流れのなす角を何と呼ぶか？", opts:["バンク角", "迎角（むかえかく）", "スリップ角"], ans:1, exp:"翼弦と相対気流のなす角を迎角（アタックアングル）と呼びます。" },
+  { id:11, cat:"第4章", q:"飛行機において、ペイロードの搭載により機体重量が「2倍」になった場合、同じ迎角で飛行を維持するために必要な最低速度（失速速度）は約何倍になるか？", opts:["約 1.2倍", "約 1.4倍", "約 2.0倍"], ans:1, exp:"揚力は速度の2乗に比例するため、重量が2倍なら最低速度は √2（約1.4）倍必要になります。" },
+  { id:12, cat:"第4章", q:"飛行機がバンク角（ロール角）20度の定常旋回を行う際、水平直線飛行時と比較して必要な揚力は約何倍になるか？（cos20°≒0.94とする）", opts:["約 0.94倍", "約 1.06倍", "約 1.20倍"], ans:1, exp:"旋回飛行には 1/cosφ 倍の揚力が必要です。1/cos20° = 1/0.94 ≒ 1.06倍となります。" },
+  { id:13, cat:"第4章", q:"高度 100m から無推力で滑空する場合、揚抗比（L/D）が 15 の飛行機の滑空距離はいくらか？", opts:["1,000m", "1,500m", "3,000m"], ans:1, exp:"滑空距離 d ＝ 高度 h × 揚抗比 L/D なので、100m × 15 ＝ 1,500m です。" },
+  { id:14, cat:"第4章", q:"高度 h を飛行速度 v で飛行中に揚力を失い、水平投射の形で落下する場合、墜落までの水平到達距離 x を求める式はどれか？（gは重力加速度）", opts:["x = v × (2h / g)", "x = v × √(2h / g)", "x = √(v^2 + 2gh)"], ans:1, exp:"水平到達距離 x は、初速 v と落下時間 t ( = √(2h/g) ) の積で求められます。" },
+  { id:15, cat:"第4章", q:"IMU（慣性計測装置）の一般的な構成として、正しいデバイスの組み合わせはどれか？", opts:["GNSS受信機と地磁気センサ", "3軸のジャイロセンサと3方向の加速度センサ", "送信機とレシーバー"], ans:1, exp:"IMU はジャイロセンサと加速度センサを組み合わせた、慣性計測の基本ユニットです。" },
+  { id:16, cat:"第4章", q:"気圧センサを用いて高度を計測する原理として、正しいものはどれか？", opts:["機体から超音波を発射し、地表からの反射時間を測定する。", "高度が高くなるほど気圧が下がる性質を利用し、歪みゲージ等で読み取る。", "レーザー光（赤外線）を照射し、反射光の強度から算出する。"], ans:1, exp:"気圧センサは、高度上昇に伴う気圧変化を歪みゲージ等で電気信号に変えて高度を測定します。" },
+  { id:17, cat:"第4章", q:"バッテリーの「容量（Ah）」の定義として、正しいものはどれか？", opts:["満充電から最低電圧（終止電圧）になるまでの間に、利用できる電気量。", "単位時間当たりのエネルギー量（V × A）のこと。", "放電時の電圧と電流の比率（%）のこと。"], ans:0, exp:"容量は、決められた終止電圧に達するまでに取り出せる電気の総量（Ah）です。" },
+  { id:18, cat:"第4章", q:"バッテリーの「電圧降下」を決定する主な要因はどれか？", opts:["バッテリーの内部抵抗と、流れる電流の大きさ。", "プロペラの形状と、機体の最大速度。", "送信機の電波出力の強さ。"], ans:0, exp:"電圧降下は、バッテリー内部の抵抗と、その時に流れている電流の大きさ（V=RI）によって決まります。" },
+  { id:19, cat:"第4章", q:"ブラシレスモーターがブラシモーターと比較して優れている点として、誤っているものはどれか？", opts:["ブラシの交換が不要でメンテナンスが容易である。", "静音性に優れ、寿命が長い。", "構造が単純なため、ESC（スピードコントローラー）なしで駆動できる。"], ans:2, exp:"ブラシレスモーターの駆動には、電気的な位相を制御する ESC が不可欠です。" },
+  { id:20, cat:"第4章", q:"日本で一般的な「モード 1」の送信機において、右側のスティックを「上下」に操作したときに制御される機能はどれか？", opts:["エレベーター（前後移動）", "スロットル（上昇・降下）", "エルロン（左右移動）"], ans:1, exp:"日本の「モード 1」では、右スティックの上下がスロットル（上昇・降下）です。" },
+  { id:21, cat:"第4章", q:"リチウムポリマー（LiPo）バッテリーの特徴として、正しいものはどれか？", opts:["メモリ効果が非常に大きく、常に完全に使い切ってから充電する必要がある。", "エネルギー密度が高く、電解質が可燃物であるため、取り扱いには注意を要する。", "満充電の状態で長期間保管することが、最も劣化を防ぐ方法である。"], ans:1, exp:"LiPo バッテリーは自己放電は少ないものの、エネルギー密度が高く衝撃や過充電で発火する恐れがあります。" },
+  { id:22, cat:"第4章", q:"LiPoバッテリーにおいて、継ぎ足し充電などにより見かけの放電容量が減少する現象を何と呼ぶか？", opts:["地面効果", "メモリ効果", "マルチパス"], ans:1, exp:"メモリ効果は、浅い充放電を繰り返すことで見かけの容量が減る現象です（LiPoでは小さい）。" },
+  { id:23, cat:"第4章", q:"複数のセルで構成された LiPo バッテリーを「バランス充電」すべき最大の理由はどれか？", opts:["充電時間を半分以下に短縮するため。", "各セル間の電圧差をなくし、特定のセルの過放電や劣化・発火を防ぐため。", "機体の重心バランスを自動的に調整するため。"], ans:1, exp:"多セルバッテリーの各電圧を均一に保つことは、劣化防止と発火事故の防止に直結します。" },
+  { id:24, cat:"第4章", q:"エンジン機において「混合燃料」を使用する場合の注意点はどれか？", opts:["ガソリンスタンドで販売されているハイオクガソリンを無加工で使用する。", "メーカーが指定するオイルの混合比率を厳守して扱う。", "水とガソリンを 1:1 の割合で混ぜて使用する。"], ans:1, exp:"エンジンの焼き付きを防ぐため、オイルの混合比率は極めて重要です。" },
+  { id:25, cat:"第4章", q:"物件投下装置（ウインチ等）で荷物を吊り下げて飛行させる際、物理的に最も注意すべき点はどれか？", opts:["物件の揺れ、および投下前後の機体の重心の変化。", "吊り下げるワイヤーの光沢による電波干渉。", "荷物の色が機体と同じであること。"], ans:0, exp:"吊り下げ荷物の揺れや、切り離し後の機体重量の変化は、飛行の安定を著しく乱します。" },
+  { id:26, cat:"第4章", q:"電波の電力密度は、進行距離が「2倍」になると、理論上どの程度まで減少（減衰）するか？", opts:["1/2 に減少する。", "1/4 に減少する（距離の2乗に反比例）。", "1/8 に減少する。"], ans:1, exp:"電波の電力密度は、距離の2乗に反比例して減少します（距離2倍なら 1/4）。" },
+  { id:27, cat:"第4章", q:"送信アンテナからの直接波と、山や建物による反射波・屈折波が干渉し、受信強度が変動する現象を何と呼ぶか？", opts:["フレネルゾーン", "マルチパス", "回折（かいせつ）"], ans:1, exp:"複数の経路（パス）を通った電波が干渉し合う現象をマルチパスと呼びます。" },
+  { id:28, cat:"第4章", q:"無線通信において、電力損失をすることなく安定して通信するために確保すべき楕円体の領域を何と呼ぶか？", opts:["ジオフェンス", "フレネルゾーン", "デッドゾーン"], ans:1, exp:"第 1 フレネルゾーンの見通しを確保することが、安定した無線通信の条件です。" },
+  { id:29, cat:"第4章", q:"無人航空機の運用で利用される「169MHz 帯」の主な用途はどれか？", opts:["4K 映像のリアルタイム高速伝送。", "2.4GHz 帯等の制御回線が途絶えた際のバックアップ用通信。", "GNSS 衛星からの時刻情報の受信。"], ans:1, exp:"169MHz 帯は電波が回り込みやすいため、2.4GHz 帯等のバックアップとして利用されます。" },
+  { id:30, cat:"第4章", q:"マイクロ波（3〜30GHz）の性質として、適切なものはどれか？", opts:["波長が長いため、建物の裏側へ回り込む「回折」の性質が非常に強い。", "直進性が強く、特定の方向へ向けて発射するのに適しており、情報伝達容量が大きい。", "水中においても減衰せず、深海まで到達することができる。"], ans:1, exp:"マイクロ波は直進性が非常に強く、大容量のデータを特定の方向へ送るのに適しています。" },
+  { id:31, cat:"第4章", q:"無指向性アンテナを装備した送信機において、電波が最も「弱くなる」方向はどこか？", opts:["アンテナの真横（側面方向）。", "アンテナの先端（軸）が指している方向。", "アンテナの根元の方向。"], ans:1, exp:"アンテナの先端方向（軸方向）は、電波の放出が最も弱くなるヌル点（死角）です。" },
+  { id:32, cat:"第4章", q:"地磁気センサが示す「磁北」と、地図上の「真北」との間に生じる角度の差を何と呼ぶか？", opts:["迎角", "偏角", "バンク角"], ans:1, exp:"地図上の北（真北）と磁石の北（磁北）のずれを偏角と呼びます。" },
+  { id:33, cat:"第4章", q:"地磁気の検出に悪影響を与え、機体の姿勢を乱す可能性がある環境として、教則が挙げている例はどれか？", opts:["広大な農地や、木造平屋建ての住宅地。", "高圧送電線、変電所、鉄材を多く使用した建物や鉄道。", "プラスチック製の遊具が置かれた公園。"], ans:1, exp:"地磁気センサ（コンパス）は、金属や高電圧による磁場の乱れに非常に敏感です。" },
+  { id:34, cat:"第4章", q:"飛行前に実施する「磁気キャリブレーション（コンパス校正）」の主な目的はどれか？", opts:["バッテリーの放電量を一定に保つため。", "その場所の地磁気を検出し、方位を GNSS 機能等に正しく認識させるため。", "送信機のスティックの「遊び」をなくすため。"], ans:1, exp:"磁気キャリブレーションにより、機体周辺の磁場環境をリセットし、正しい方位を認識させます。" },
+  { id:35, cat:"第4章", q:"GNSS（全球測位衛星システム）に含まれる、日本の準天頂衛星システムの名称はどれか？", opts:["GLONASS", "Galileo", "QZSS（みちびき）"], ans:2, exp:"QZSS は日本の「準天頂衛星システム（みちびき）」の略称です。" },
+  { id:36, cat:"第4章", q:"GNSS 測位において、機体の位置を3次元（経緯度・高度）で特定し、時刻補正を行うために最低限必要な衛星の数はいくつか？", opts:["2個", "4個", "10個"], ans:1, exp:"X, Y, Z の 3 軸位置と、内蔵時計の補正を合わせて、最低 4 個の衛星が必要です。" },
+  { id:37, cat:"第4章", q:"RTK (Real Time Kinematic) 測位を使用した場合、期待できる位置精度のレベルはどれか？", opts:["数十メートル程度の誤差。", "数センチメートル〜数ミリメートルレベルの極めて高い精度。", "水平方向のみ 10cm 以内だが、高度方向は 10m 以上の誤差。"], ans:1, exp:"RTK 測位は固定局との位相差を利用し、数センチ級の超高精度な測位を実現します。" },
+  { id:38, cat:"第4章", q:"GNSS を利用した飛行において、一般的に位置精度の誤差が大きくなりやすい方向はどれか？", opts:["水平方向（経緯度）", "高度方向（垂直方向）", "進行方向のみ"], ans:1, exp:"GNSS の衛星配置の都合上、水平方向よりも高度（垂直）方向の誤差が大きくなる傾向があります。" },
+  { id:39, cat:"第4章", q:"LiPo バッテリーの劣化を遅らせるため、長期間使用しない時の保管量として推奨される目安はどれか？", opts:["満充電（100%）の状態。", "完全放電（0%）の状態。", "充電量 60% 程度の状態。"], ans:2, exp:"LiPo バッテリーは、劣化を防ぐために充電量 60% 程度で保管するのが理想的です。" },
+  { id:40, cat:"第4章", q:"事業で用いた LiPo バッテリーを廃棄する際、遵守すべき法律上の扱いはどれか？", opts:["各自治体の「燃えないゴミ」として出す。", "法律に基づき「産業廃棄物」として適切に処理する。", "家電量販店のリサイクル BOX に無断で投入する。"], ans:1, exp:"業務用（事業用）バッテリーの廃棄は、廃棄物処理法に基づき「産業廃棄物」としての処理が必要です。" },
+  { id:41, cat:"第4章", q:"回転翼航空機が垂直降下する際に、自らの吹き下ろし気流に巻き込まれ、揚力を失い急降下する現象を何と呼ぶか？", opts:["地面効果", "ボルテックス・リング・ステート (VRS)", "マルチパス"], ans:1, exp:"垂直降下中に自分の下降気流（ダウンウォッシュ）を吸い込む、極めて危険な状態です。" },
+  { id:42, cat:"第4章", q:"機体重量 1.5kg 程度のマルチローターにおいて、地面付近で揚力が増す「地面効果」が顕著に発生する高度の目安はどれか？", opts:["対地高度 1m 程度まで", "対地高度 10m 程度まで", "高度に関わらず常に発生する"], ans:0, exp:"1.5kg クラスの小型機では、地面から 1m 程度の範囲で地面効果が顕著になります。" },
+  { id:43, cat:"第4章", q:"緊急時に GNSS 機能が無効（マニュアルモード等）になった際、機体を安定させるために操縦者が行うべき操作はどれか？", opts:["スロットルを最大にして一気に上昇させる。", "エレベーター及びエルロンを細かく操作し、水平位置を維持する。", "送信機の電源を一度切り、再起動を待つ。"], ans:1, exp:"センサによる自動制御が効かない場合は、手動（マニュアル）による細かな修正操作が必須です。" },
+  { id:44, cat:"第4章", q:"ヘリコプターの離着陸地点として、砂や乾燥した土の上を避けるべき主な理由はどれか？", opts:["機体の脚が砂に埋もれて離陸できなくなるため。", "ローターの風（ダウンウォッシュ）で砂埃が舞い、視界を遮ったり故障を招いたりするため。", "砂が電波を吸収し、通信距離が極端に短くなるため。"], ans:1, exp:"砂塵の巻き上げは視界を奪うだけでなく、モーターやカメラの故障に繋がります。" },
+  { id:45, cat:"第4章", q:"飛行機の離着陸において、原則として選択すべき風向はどれか？", opts:["追い風", "向かい風", "真横からの風"], ans:1, exp:"飛行機は向かい風を受けることで、低速でも大きな揚力を得て安全に離着陸できます。" },
+  { id:46, cat:"第4章", q:"フェールセーフ機能における「自動帰還モード（RTH）」の設定高度について、適切な考え方はどれか？", opts:["バッテリーを節約するため、常に 10m 以下の低高度にする。", "飛行経路上の障害物を確実に回避できる、安全な高さを設定する。", "有人航空機との衝突を避けるため、常に 150m 以上の高さにする。"], ans:1, exp:"RTH 中に建物や木に衝突しないよう、あらかじめ調査した安全な高度に設定すべきです。" },
+  { id:47, cat:"第4章", q:"CRM（クルー・リソース・マネジメント）において、操作ミス（エラー）を誘発する要因（気象変化、機材不具合等）を何と呼ぶか？", opts:["スレット（Threat：脅威）", "UAS（望ましくない状態）", "リスク（Risk）"], ans:0, exp:"TEM（スレット＆エラーマネジメント）では、外部からの不安全要因をスレット（脅威）と呼びます。" },
+  { id:48, cat:"第4章", q:"カテゴリーIII飛行（有人地帯での目視外飛行）を行う機体に求められる「冗長性」の例として正しいものはどれか？", opts:["一部のプロペラやモーターが故障しても、墜落せずに着陸できる構造。", "機体を軽くするために、予備のパーツを一切搭載しない構造。", "送信機のアンテナを1本だけに限定し、操作を単純化した構造。"], ans:0, exp:"レベル 4 飛行では、単一の故障が墜落に直結しない「冗長設計」が必須要件の一つです。" },
+  { id:49, cat:"第4章", q:"高度 100m を飛行速度 10m/s で飛行中の無人航空機が揚力を失い落下する場合、空気抵抗を無視すると、水平方向に約何メートル先まで到達するか？（g=9.8m/s^2, √20.4≒4.5とする）", opts:["約 10m", "約 45m", "約 100m"], ans:1, exp:"落下時間は √(2×100/9.8) ≒ 4.5秒。水平距離 ＝ 10m/s × 4.5秒 ＝ 45m となります。" },
+  { id:50, cat:"第4章", q:"2.4GHz 帯を使用し 100m 離れた地点と通信する場合、フレネル半径（約1.77m）の何％以上のアンテナ高さが確保できれば、障害物がない場合と同等の品質を維持できるとされているか？", opts:["30%", "60%", "100%"], ans:1, exp:"実際にはフレネル半径の 60% 以上の高さを確保できれば、良好な通信品質が保てます。" },
+  { id:1, cat:"第5章", q:"無人航空機の運航において、操縦者が「操縦者としての自覚」を持ち、あらゆる状況下で常に第一に考えるべき事項はどれか？", opts:["機体本体や高価なカメラ等の機材の損傷を最小限に抑えること。", "飛行計画で定められたスケジュールを遵守し、業務を完遂させること。", "飛行に関与しない第三者を含め、常に人の安全を守ること。"], ans:2, exp:"操縦者の役割として最も重要なのは、「あらゆる状況下で、常に人の安全を守ることを第一に考えること」です 。機材の保全や業務の遂行よりも、生命の安全が最大限優先されます。" },
+  { id:2, cat:"第5章", q:"カテゴリーIII飛行（有人地帯での目視外飛行）を行う操縦者に対し、航空法上で追加的に義務付けられている事項として正しいものはどれか？", opts:["二等無人航空機操縦士以上の技能証明を保有していること。", "一等無人航空機操縦士の技能証明を取得し、運航の中心的な役割を果たす責任を自覚すること。", "機体認証を受けた機体であれば、操縦者の技能証明の等級は問われない。"], ans:1, exp:"カテゴリーIII飛行は最もリスクの高い飛行であるため、一等技能証明の取得に加え、操縦者が運航の中心的役割を果たし、責任を自覚することが義務付けられています。" },
+  { id:3, cat:"第5章", q:"安全な運航を実現するための「点検プロセス」や「点検項目」を定める際、操縦者が最も優先して従うべき基準はどれか？", opts:["操縦者が過去に経験した同様の機体でのトラブル事例。", "機体メーカーが指定する無人航空機整備手順書等の指示内容。", "インターネット上のコミュニティで推奨されている保守点検方法。"], ans:1, exp:"安全運航のための点検プロセスは、独自のルールではなく、機体メーカーが指示する整備内容に従って実施しなければなりません。" },
+  { id:4, cat:"第5章", q:"飛行前の「準備段階」において、操縦者が確認すべき事項として教則に明記されているものはどれか？", opts:["機体に搭載したSDカードの残り容量が最大であること。", "飛行に必要な許可・承認や、機体登録の有効期間が切れていないこと。", "操縦者が前日に摂取した食事の栄養バランス。"], ans:1, exp:"飛行前の準備では、機体の登録や飛行許可・承認が有効期間内であることを最終確認することが求められます。" },
+  { id:5, cat:"第5章", q:"飛行前の「点検」において、機体本体の状態確認として義務付けられている項目に含まれないものはどれか？", opts:["各機器の取付状況（ネジ等の脱落やゆるみ）の確認。", "通信系統、推進系統、電源系統及び自動制御系統の作動状況。", "機体の塗色と、操縦者の服装のコーディネートの確認。"], ans:2, exp:"飛行前の点検では、ネジの緩み、プロペラの損傷、各系統（通信・推進・電源等）の作動確認が義務付けられていますが、デザイン等のファッション性は安全確認項目に含まれません。" },
+  { id:6, cat:"第5章", q:"飛行中の監視において、操縦者が「継続的に」確認し、維持すべき項目として適切なものはどれか？", opts:["機体の異常の有無、および計画通りの経路・高度・速度が維持されているか。", "送信機画面に表示される地図の著作権情報の更新状況。", "機体と操縦者の間の距離を正確にミリメートル単位で把握すること。"], ans:0, exp:"飛行中は、機体の異常の有無だけでなく、計画された経路・高度・速度が正しく維持されているかを継続的に監視する必要があります。" },
+  { id:7, cat:"第5章", q:"飛行後の点検において、次回の飛行に備えて確認すべき事項として正しいものはどれか？", opts:["各機器の異常な発熱の有無や、各部品の摩耗・損傷の状態。", "その日の飛行で得られた撮影データの販売価格の検討。", "機体の各アームに付着した泥の成分分析。"], ans:0, exp:"飛行後の点検では、次回の安全飛行のために、部品の摩耗や異常な発熱がないかを確認し、手入れを行う必要があります。" },
+  { id:8, cat:"第5章", q:"運航終了後の作業に含まれる、特定飛行を行った場合の航空法上の法的義務はどれか？", opts:["機体からバッテリーを取り外し、常に 100% の状態で保管すること。", "飛行記録、日常点検記録、点検整備記録を遅滞なく飛行日誌に記載すること。", "操縦者の個人SNSに飛行動画を投稿して公開すること。"], ans:1, exp:"特定飛行を行った場合、飛行記録、日常点検記録、点検整備記録の３項目を飛行日誌に遅滞なく記載することが航空法上の義務です。" },
+  { id:9, cat:"第5章", q:"ガソリンエンジン機を運用するためガソリンを乗用車等で運搬する場合、消防法により定められた「専用容器」の最大容量は？", opts:["10 リットル", "22 リットル", "50 リットル"], ans:1, exp:"ガソリンは危険物であり、乗用車等での運搬には消防法で定められた 22 リットル以下の専用容器を使用しなければなりません。" },
+  { id:10, cat:"第5章", q:"カテゴリーII飛行の許可・承認申請を行う際、原則として飛行開始予定日の何日前までに申請書を提出する必要があるか？", opts:["3 開庁日前まで", "10 開庁日前まで", "20 開庁日前まで"], ans:1, exp:"カテゴリーII飛行（特定飛行）の許可・承認申請は、飛行開始予定日の 10 開庁日前までに所定の窓口へ提出する必要があります。" },
+  { id:11, cat:"第5章", q:"物件投下を行う際、投下場所に補助者を配置「しない」場合の運用限界高度として正しいものはどれか？", opts:["高度 1m 以内", "高度 5m 以内", "高度 10m 以内"], ans:0, exp:"物件投下を行う際、投下場所に補助者を配置しない場合の原則的な最大高度は 1m 以内と定められています。" },
+  { id:12, cat:"第5章", q:"無人航空機に係る「セキュリティ確保」において、サイバーセキュリティの観点から教則が推奨している対策はどれか？", opts:["機体認証・型式認証を受けた機体を利用すること。", "セキュリティソフトをインストールできない自作機をメインに使うこと。", "送信機を常に公衆 Wi-Fi に接続した状態で運用すること。"], ans:0, exp:"認証を受けた機体は一定のサイバーセキュリティ対策がなされているため、認証機体を利用することがリスク軽減策として有効です。" },
+  { id:13, cat:"第5章", q:"マルチローターの離陸直後、揚力が増し機体が不安定になりやすい「地面効果」が顕著に発生する高度の目安は？", opts:["機体重量 1.5kg 程度の機体で、対地高度 1m 程度まで。", "機体のプロペラの直径の 100倍の高度まで。", "高度 150m 付近の気圧の変わり目。"], ans:0, exp:"1.5kg 程度の小型機の場合、地面付近の吹き下ろし気流の滞留により揚力が増す「地面効果」は、対地高度 1m 程度までの間で顕著になります。" },
+  { id:14, cat:"第5章", q:"マルチローターを垂直降下させる際に「ボルテックス・リング・ステート」を回避・予防するための操作として適切なものはどれか？", opts:["スロットルを最大にして一気に垂直降下を早める。", "水平方向の移動（前後左右）を合わせて操作しながら降下する。", "その場でラダー（左右旋回）を高速で繰り返す。"], ans:1, exp:"垂直降下時に自らの下降気流を吸い込んで揚力を失う「VRS」を避けるには、水平移動（斜め降下）を組み合わせることが有効な墜落防止策となります。" },
+  { id:15, cat:"第5章", q:"異常事態により GNSS 機能が無効（マニュアルモード等）になった際、水平位置を維持するために操縦者が行うべきことはどれか？", opts:["エレベーター操作及びエルロン操作を細かく行い、目視で機体を制御する。", "スロットルを一定に保てば、機体は自動的にその場に留まる。", "送信機の電源を一度切り、再起動させて自動復旧を待つ。"], ans:0, exp:"GNSS による位置安定が効かない場合、操縦者はエレベーターやエルロンを手動で細かく操作し、機体を水平に保つ技能が求められます。" },
+  { id:16, cat:"第5章", q:"ヘリコプターの離着陸地点として、砂や乾燥した土の上を避けるべき主な理由はどれか？", opts:["機体が砂に埋もれて重量が増し、離陸できなくなるため。", "ダウンウォッシュ（吹き下ろし）で砂埃が飛散し、視界不良や機体故障を招くため。", "砂地は地磁気を吸収し、ジャイロセンサが正常に作動しなくなるため。"], ans:1, exp:"砂地での離着陸は、強力なダウンウォッシュによって砂埃が舞い上がり、視界を遮るほか、モーターやカメラの故障原因となります。" },
+  { id:17, cat:"第5章", q:"ヘリコプターの離陸操作において、事故を防ぐために遵守すべき手順はどれか？", opts:["ローターの回転が上がり始める前に、素早くスロットルを上げる。", "十分にローター回転が上昇してから、慎重に離陸させる。", "離陸の瞬間は常に機首を自分の方へ向けて操作する。"], ans:1, exp:"ヘリコプターは十分にローター回転が上昇してから離陸させる必要があります。回転が低い状態での離陸は反応が遅れ、極めて危険です。" },
+  { id:18, cat:"第5章", q:"飛行機の離着陸において、原則として選択すべき風向はどれか？", opts:["追い風（機体の後方から吹く風）", "向かい風（機体の前方から吹く風）", "真横からの強い風（横風）"], ans:1, exp:"飛行機は向かい風を受けることで、より低速でも大きな揚力を得ることができ、安全に離着陸することが可能になります。" },
+  { id:19, cat:"第5章", q:"飛行機を「追い風」で離着陸させた場合に生じる具体的なリスクはどれか？", opts:["揚力が発生しすぎて機体が空中に留まり、着陸できなくなる危険。", "対気速度が不足して失速したり、接地速度が速すぎて滑走路を逸脱したりする危険。", "機体が風に押し戻されて、後退した状態で接地してしまう危険。"], ans:1, exp:"追い風での離着陸は、風速分だけ対気速度が不足して失速するリスクや、逆に接地時の対地速度が速すぎてオーバーランする危険があります。" },
+  { id:20, cat:"第5章", q:"自動操縦（ウェイポイント飛行）を行う際、事前にアプリケーション上の地図で行う設定項目に含まれないものはどれか？", opts:["機体の向き（機首方向）の設定。", "飛行する高度や速度、および経由点（ウェイポイント）。", "プロペラ一枚ごとの微細な傷の電子的な修復。"], ans:2, exp:"自動操縦の設定にはウェイポイント（位置）、高度、速度、向きが含まれますが、物理的な傷を電子的に修復する機能はありません。" },
+  { id:21, cat:"第5章", q:"手動操縦が自動操縦よりも適しているとされる実務の例として、正しいものはどれか？", opts:["離島への定期的な荷物配送ルートの飛行。", "複雑な構造物の点検や、芸術性を要求される空撮。", "広大な面積を一定の間隔で散布する農薬散布飛行。"], ans:1, exp:"自動操縦は再現性に優れる一方、複雑な構造物の至近距離での点検や、クリエイティブな空撮などは、状況に即応できる手動操縦が適しています。" },
+  { id:22, cat:"第5章", q:"手動操縦において、ヒューマンエラーが発生しやすい機体の向きと操縦者の関係はどれか？", opts:["操縦者の視線と、機体の正面方向が一致しているとき（背後からの操縦）。", "操縦者の視線と、機体の正面方向が異なる（対面操縦等）とき。", "機体が操縦者から 30m 以上離れて高度が安定しているとき。"], ans:1, exp:"機首が自分を向いている対面操縦など、操縦者の視線と機体の正面が異なるときは、左右の操作が逆になり、ヒューマンエラーが発生しやすくなります。" },
+  { id:23, cat:"第5章", q:"自動操縦中に「不安定な飛行」と判断して手動操縦に切り替えた直後、操縦者が行うべき対応はどれか？", opts:["すぐに最高速度でホームポイント（離陸地点）に戻す。", "まずはホバリングを行い、機体の安定性や周囲の安全を確認する。", "自動操縦のボタンを何度も押し直して復旧を試みる。"], ans:1, exp:"手動に切り替えた直後は挙動が不安定になる可能性があるため、まずはホバリングで機体を安定させ、安全を確認することが重要です。" },
+  { id:24, cat:"第5章", q:"緊急時の対応として、教則が推奨している着陸判断の基本方針はどれか？", opts:["機体損傷を防ぐため、何が何でも舗装された離陸地点まで戻すこと。", "無理に離陸地点に戻そうとせず、速やかに近くの安全な無人地帯へ不時着させること。", "機体が壊れないよう、クッション性のある民家の屋根等を探して降ろすこと。"], ans:1, exp:"緊急時には、無理に離陸地点に戻そうとせず、周囲の安全（第三者の有無）を優先して近くの安全な無人地帯へ不時着させるべきです。" },
+  { id:25, cat:"第5章", q:"フェールセーフ機能における「電波断絶時」の機体動作の設定として一般的なものはどれか？", opts:["自動帰還（RTH）モードへの切り替え、または空中停止（ホバリング）。", "その場で電源を完全に遮断し、自由落下させる。", "操縦者のスマートフォンへ自動的に電話をかける。"], ans:0, exp:"電波が途切れた際（プロスト）のフェールセーフ動作として、一般的には自動帰還（RTH）や、その場でのホバリングが設定されます。" },
+  { id:26, cat:"第5章", q:"CRM（クルー・リソース・マネジメント）の定義として、適切なものはどれか？", opts:["操縦者の反射神経を向上させるための特別なトレーニング。", "安全な運航のために、利用可能な全ての人的リソース、ハードウェア及び情報を活用する概念。", "機体の運用コストを最小限に抑え、利益を最大化するための経営管理手法。"], ans:1, exp:"CRM とは、テクニカルスキルだけでなく、人、機材、情報を統合して活用し、安全性を高めるための管理概念です。" },
+  { id:27, cat:"第5章", q:"TEM（スレット＆エラーマネジメント）において、エラーを誘発する「スレット（脅威）」に該当する例はどれか？", opts:["操縦者の操作ミスや、チェックリストの確認漏れ。", "気象の変化、操縦者の疲労、機材の予期せぬ不具合。", "機体が安全マージンの低下した「望ましくない状態」そのもの。"], ans:1, exp:"TEM における「スレット（脅威）」とは、天候悪化、疲労、機材故障など、操縦者のエラーを誘発する外部的な要因を指します。" },
+  { id:28, cat:"第5章", q:"CRMスキル（ノンテクニカルスキル）の5つの要素に含まれないものはどれか？", opts:["状況認識、意思決定", "ワークロード管理、チームワーク、コミュニケーション", "モーターの回転数調整、バッテリー電圧の直接計測"], ans:2, exp:"ノンテクニカルスキルである CRM 要素は「状況認識、意思決定、ワークロード管理、チームワーク、コミュニケーション」の５つです。" },
+  { id:29, cat:"第5章", q:"補助者の役割として、教則に記載されている内容はどれか？", opts:["飛行準備や飛行経路の安全管理、および第三者の立入管理を主として行う。", "操縦者が疲れた際に、代わりに送信機のスティックを操作して操縦する。", "機体メーカーの工場へ行き、部品の製造を監督する。"], ans:0, exp:"操縦者が操縦に集中できるよう、飛行準備や飛行経路下の安全管理、第三者の立入監視を主導するのが補助者の役割です。" },
+  { id:30, cat:"第5章", q:"操縦者と補助者のコミュニケーションにおいて、情報の共有を確実にするために必要なことはどれか？", opts:["事故が起きたときだけ大きな声で叫ぶ。", "予め決められた手段（無線機等）を用いて、誤解や伝達の遅れがないよう行う。", "操縦者が集中できるよう、補助者は飛行中一切の会話を控える。"], ans:1, exp:"コミュニケーションの齟齬をなくすため、無線機等の予め決められた手段を使い、明確で遅延のない情報共有を行う必要があります。" },
+  { id:31, cat:"第5章", q:"事故発生時の優先順位として、操縦者が「第一に行うべき」ことは何か？", opts:["国土交通大臣への電話報告。", "負傷者の救護および緊急通報（119番等）。", "墜落した機体の損害額の算出。"], ans:1, exp:"事故が起きた際の最優先事項は「人の安全確認」です。直ちに飛行を中止し、負傷者の救護と 119 番通報等の緊急連絡を第一に行います。" },
+  { id:32, cat:"第5章", q:"機体が墜落し、通電している場合に講ずべき「危険防止のための措置」はどれか？", opts:["そのまま放電が完了するまで遠くから見守る。", "速やかに電源を切るなど、バッテリーの発火等を防ぐ措置を講ずる。", "水の中に沈めて強制的にショートさせる。"], ans:1, exp:"墜落後の火災（二次被害）を防ぐため、通電している機体は速やかに電源を切るなど、危険防止のための措置を講じる必要があります。" },
+  { id:33, cat:"第5章", q:"アルコール摂取に関する自己管理について、教則が注意を促している内容はどれか？", opts:["前夜の飲酒であっても、翌朝の操縦時までアルコールの影響が残っている可能性があること。", "酒気残りを感じなければ、体内アルコール濃度を気にする必要はないこと。", "アルコール検知器を使用することは、個人のプライバシー侵害にあたること。"], ans:0, exp:"アルコールの影響は個人差があるため、前夜の飲酒が翌朝まで残っている可能性を常に考慮し、管理に努める必要があります。" },
+  { id:34, cat:"第5章", q:"操縦者のパフォーマンスを低下させる要因として、管理が必要な項目はどれか？", opts:["飛行時間、および疲労やストレスの状況。", "送信機ストラップの色と素材。", "当日の機体のデコレーション用ステッカーの枚数。"], ans:0, exp:"疲労やストレスは注意力の散漫や判断力の低下を招き、事故の原因となります。操縦者は飛行時間や自身の疲労度を適切に管理しなければなりません。" },
+  { id:35, cat:"第5章", q:"飛行前の「外部点検」で、確認が義務付けられている推進系統の項目はどれか？", opts:["プロペラの損傷、歪み、および取付状態。", "送信機のアンテナの長さが最大であるか。", "モーターを固定するネジのメーカー名。"], ans:0, exp:"飛行前の外部点検では、ネジの脱落・ゆるみに加え、推進力の要であるプロペラの損傷、歪み、取付状況の確認が必須です。" },
+  { id:36, cat:"第5章", q:"重大インシデントに該当する「発火」の定義として正しいものはどれか？", opts:["機体が自宅での充電中に発火した事態。", "無人航空機が「飛行中」に発火した事態。", "バッテリーを産業廃棄物として処理する際に発火した事態。"], ans:1, exp:"重大インシデントとしての発火は、「飛行中に発生したものに限る」と定義されています。" },
+  { id:37, cat:"第5章", q:"飛行日誌の「飛行記録」に記載すべき内容に含まれるものはどれか？", opts:["飛行の年月日、離着陸場所、時刻、飛行時間、操縦者氏名、不具合の有無。", "その日の飛行で撮影された写真の合計ファイルサイズ。", "操縦者が飛行中に飲んだ飲料の種類。"], ans:0, exp:"飛行記録には、安全管理上必要な日時、場所、時間、操縦者名、不具合の有無を正確に記載する義務があります。" },
+  { id:38, cat:"第5章", q:"飛行計画の通報（DIPS）において、事後の通報が認められる「正当な理由」とは？", opts:["操縦者が通報をうっかり忘れてしまった場合。", "あらかじめ通報することが困難な場合（緊急の災害対応等）。", "通報システムへのログインパスワードを紛失した場合。"], ans:1, exp:"飛行計画は原則事前通報ですが、緊急の災害対応などで事前通報が困難な場合に限り、事後の通報が認められています。" },
+  { id:39, cat:"第5章", q:"操縦者技能証明制度の目的は、国が何を証明することか？", opts:["無人航空機を飛行させるのに必要となる一定の技能（知識及び能力）を有していること。", "その操縦者が、過去に一度も墜落事故を起こしていないこと。", "操縦者の視力が 2.0 以上であることを国が保証すること。"], ans:0, exp:"技能証明制度は、無人航空機を安全に飛行させるために必要となる「知識」と「能力」を国が判定し証明する制度です。" },
+  { id:40, cat:"第5章", q:"機体認証を受けた無人航空機の使用者が負う「整備の義務」とは何か？", opts:["機体メーカーが定める無人航空機整備手順書等に従って整備すること。", "部品が壊れて動かなくなるまで、一切の点検を行わないこと。", "機体内部の基板を、操縦者独自の判断で改造し続けること。"], ans:0, exp:"機体認証制度において、使用者は機体を安全基準に適合するよう維持するため、メーカーの整備手順書に従って整備する義務を負います。" },
+  { id:41, cat:"第5章", q:"複数人で運航を行う際、補助者の配置や各人の担当範囲を決めておくタイミングはいつか？", opts:["離陸してから 10分後。", "飛行を開始する前（ブリーフィング等）。", "機体が異常な挙動を示した時。"], ans:1, exp:"役割分担の不明確さは事故の原因となるため、誰が操縦者か、誰が補助者か、それぞれの担当範囲を「飛行前に明確にしておく」必要があります。" },
+  { id:42, cat:"第5章", q:"飛行前の気象確認において、教則が「収集すべき」としている最新情報の組み合わせはどれか？", opts:["天気、風向、風速、警報、注意報。", "翌月の長期天気予報と、過去10年間の降水量データ。", "操縦者の居住地域の湿度のみ。"], ans:0, exp:"飛行直前には、最新の天気、風向、風速、および各種警報・注意報を収集し、飛行の可否を判断しなければなりません。" },
+  { id:43, cat:"第5章", q:"飛行後の点検において、モーター周辺で確認すべき事項はどれか？", opts:["異常な異音や、手で触れられないほどの異常な発熱がないか。", "モーターの内部に砂が入っていないかを確認するための分解調査。", "モーターの製造番号が逆さまになっていないか。"], ans:0, exp:"飛行後の点検では、異常な異音がないか、また各機器（モーター、バッテリー等）に異常な発熱がないかを確認し、故障の予兆を察知します。" },
+  { id:44, cat:"第5章", q:"操縦者の体調管理において、「注意力が散漫になり判断力が低下する」原因として挙げられているものは？", opts:["体調が悪い場合や、睡眠不足、疲労が蓄積している状態。", "飛行直前の十分な水分補給。", "操縦者がリラックスして安定した気分でいること。"], ans:0, exp:"睡眠不足や蓄積した疲労は、知らず知らずのうちに操縦者の注意力を奪い、重大な事故を招く不安全な状態となります。" },
+  { id:45, cat:"第5章", q:"飛行中の監視において、操縦者が特に注意すべき「飛行の支障となるもの」に含まれないものはどれか？", opts:["他の航空機、電柱、高圧線、樹木、建物。", "路上を走行する自動車や、飛来する鳥。", "上空を通過する人工衛星。"], ans:2, exp:"監視すべき対象は、自機に衝突するおそれのある有人機、地上・水上の人や物件（建物、自動車等）、障害物（電柱、樹木）などです。" },
+  { id:46, cat:"第5章", q:"CRMにおける「意思決定」を支えるために、まず操縦者が行うべきことはどれか？", opts:["補助者の意見を遮り、自分の直感だけで判断する。", "正確な「状況認識」を行い、全ての利用可能なリソースを活用する。", "飛行を中止すると恥ずかしいので、無理をして継続する。"], ans:1, exp:"CRM を実践し、適切な意思決定を行うためには、現状の情報を正しく収集し（状況認識）、利用可能なハード・情報を活用することが重要です。" },
+  { id:47, cat:"第5章", q:"墜落した機体のプロペラが「まだ回転している」場合の対応として正しいものはどれか？", opts:["素手でプロペラを掴んで止める。", "不用意に機体に接近せず、十分に注意を払いながら停止を待つ。", "回転している方が風が起きて安全である。"], ans:1, exp:"回転中のプロペラは非常に危険であり、怪我の恐れがあるため、完全に停止するまで不用意に機体に接近してはなりません。" },
+  { id:48, cat:"第5章", q:"無人航空機の保険において、「損害賠償責任保険」がカバーする対象はどれか？", opts:["操縦者自身のケガの治療費。", "第三者に与えた身体的損害（対人）や財産的損害（対物）。", "盗まれた機体の再購入費用。"], ans:1, exp:"損害賠償責任保険は、無人航空機の運用により第三者の身体（対人）や財産（対物）に損害を与えた際の賠償能力を確保するための保険です。" },
+  { id:49, cat:"第5章", q:"自動操縦（ウェイポイント）の設定で、飛行経路上の障害物を確認するために最も確実な方法は？", opts:["数年前の航空写真を信じて設定する。", "事前に飛行予定地へ行き、現地調査を行って目視で確認する。", "AIが自動的に障害物を消去してくれると信じる。"], ans:1, exp:"自動操縦の設定ミスの多くは確認不足によるものです。古い地図情報を過信せず、現地調査で最新の障害物状況を確認することが必須です。" },
+  { id:50, cat:"第5章", q:"特定飛行における飛行日誌への記載において、不具合があった場合の対応はどうすべきか？", opts:["不具合の内容と、それに対してどのような対応（整備・修理等）をしたかを記載する。", "不具合を記載すると許可が取り消されるため、記載しない。", "不具合の箇所に色を塗って目立たないようにする。"], ans:0, exp:"不具合やその対応を飛行日誌の「点検整備記録」等に記載することは、事故の原因究明や再発防止のために極めて重要であり、法的義務でもあります。" },
+  { id:1, cat:"第6章", q:"無人航空機の運航における「ハザード」の定義として、正しいものはどれか？", opts:["事故等が発生する確率と、その結果生じる被害の大きさの組み合わせ。", "事故等につながる可能性のある具体的な危険要素（潜在的なものを含む）。", "事故が発生した後に、操縦者が負うことになる刑事的・民事的な法的責任。"], ans:1, exp:"ハザードは事故の「種」であり、事故や不安全な事象につながる可能性のある具体的な危険要因（例：強風、電柱、バッテリー劣化など）を指します。" },
+  { id:2, cat:"第6章", q:"リスク評価において、リスクを計量化する際に用いる２つの指標の組み合わせはどれか？", opts:["機体重量と、飛行させる高度。", "被害の発生確率（頻度）と、被害の重大性（大きさ）。", "操縦者の飛行経験と、補助者の人数。"], ans:1, exp:"リスクの大きさは、「その事象がどのくらいの頻度で起きるか（発生確率）」と「起きた場合にどの程度の被害が出るか（重大性）」の２つの軸で評価されます。" },
+  { id:3, cat:"第6章", q:"リスクを低減させるための２つの基本的なアプローチのうち、「被害の大きさを軽減する」対策に該当する例はどれか？", opts:["信頼性の高い機体を使用し、整備点検を徹底する。", "パラシュートの装備や、衝撃緩和材を機体に取り付ける。", "飛行前に電波環境を調査し、ノイズの少ない周波数を選択する。"], ans:1, exp:"リスク対策には「確率を下げる（点検・信頼性）」と「被害を小さくする（パラシュート・緩衝材）」の２つがあります。後者は事故が起きてしまった後の影響を抑えるための措置です。" },
+  { id:4, cat:"第6章", q:"安全マージンを確保するための「立入管理措置」において、飛行領域に加えるべき「危険半径」の算出基準はどれか？", opts:["機体重量に関わらず、常に一律で周囲 30m とする。", "飛行高度と同じ数値、又は 30m のいずれか長い方の距離を半径とする。", "機体の対角寸法の 10倍の距離を、安全な距離として設定する。"], ans:1, exp:"万一の墜落時に第三者に危害を加えないための安全範囲です。高度と同じ距離（1:1の比率）、または最低でも 30m を確保するのが基本方針です。" },
+  { id:5, cat:"第6章", q:"無人航空機の運航管理において、操縦と安全管理の役割を分割させるために配置することが望ましい役割は何か？", opts:["機体製造責任者", "安全管理者（運航管理者）", "保険会社代理人"], ans:1, exp:"安全な運航体制を構築するため、操縦のみに集中する操縦者とは別に、全体を統括し安全を管理する「安全管理者」の配置が望ましいとされています。" },
+  { id:6, cat:"第6章", q:"飛行計画策定時に、着陸予定地点への着陸が困難な場合を想定して、あらかじめ確保しておくべき場所はどれか？", opts:["最も視界の良い高台。", "離陸地点から 1km 以上離れた予備の滑走路。", "緊急着陸地点や、安全にホバリング・旋回ができる場所。"], ans:2, exp:"目的地に着陸できない、あるいはバッテリー不足で戻れない事態に備え、事前に安全な「緊急着陸地点」や「待機場所」を決めておく必要があります。" },
+  { id:7, cat:"第6章", q:"カテゴリーIII飛行のリスク評価において、地上の第三者への被害を「軽減」するために有効な機体機能の例はどれか？", opts:["必要最低限以上の数のプロペラを備える「冗長性」。", "落下時の衝撃エネルギーを軽減する「パラシュート」の展開機能。", "送信機の電波出力を最大にする増幅装置。"], ans:1, exp:"プロペラ増加（冗長性）は「墜落する確率」を下げる対策ですが、パラシュートは「墜落した時の地上被害」を軽減するための対策に分類されます。" },
+  { id:8, cat:"第6章", q:"天気図において、風の強さを判断する基準として正しい記述はどれか？", opts:["等圧線の間隔が広いほど、気圧の傾きが急であり風は強くなる。", "等圧線の間隔が狭いほど、気圧の傾きが急であり風は強くなる。", "等圧線の形状が円形に近いほど、風は一方向にのみ強く吹く。"], ans:1, exp:"等圧線の間隔が狭いということは、短距離で気圧が大きく変化している（気圧傾度が急）ことを意味し、その分風が強く吹きます。" },
+  { id:9, cat:"第6章", q:"北半球における「高気圧」付近の風の吹き方と、天候の一般的な特徴はどれか？", opts:["中心から時計回りに風が吹き出し、中心部では下降気流が発生して天気は良い。", "中心に向かって反時計回りに風が吹き込み、中心部では上昇気流が発生して天気は悪い。", "風は等圧線に垂直に吹き出し、中心部では無風状態となって霧が発生しやすい。"], ans:0, exp:"高気圧は中心から時計回りに風が吹き出します。中心部では下降気流が起こるため雲ができにくく、一般的に晴天となります。" },
+  { id:10, cat:"第6章", q:"北半球における「低気圧」付近の風の吹き方と、中心部の気流の状態はどれか？", opts:["中心から時計回りに風が吹き出し、中心部では強い下降気流が起こる。", "反時計回りに中心に向かって周囲から風が吹き込み、中心部では上昇気流が起こる。", "等圧線に沿って直線的に風が吹き、中心部では気流の上下移動は発生しない。"], ans:1, exp:"低気圧は周囲から反時計回りに風が吹き込み、中心部で上昇気流となります。上昇した空気が冷えて雲を作るため、天気は崩れます。" },
+  { id:11, cat:"第6章", q:"風向が「北の風」であるとき、風はどの方向に吹いているか？", opts:["南から北に向かって吹いている。", "北から南に向かって吹いている。", "方位磁石の北が指す方向へ一定に流れている。"], ans:1, exp:"風向は「風が吹いてくる方向」を指します。北の風とは「北から南へ」吹く風のことです。" },
+  { id:12, cat:"第6章", q:"風速の定義において、単に「風速」と言った場合に指す数値はどれか？", opts:["観測時の瞬間的な最大の風の強さ。", "観測時の前 10分間における平均風速。", "その日の日出から日没までの平均的な風の強さ。"], ans:1, exp:"気象観測における「風速」は、観測時刻までの直近 10分間の平均値を用います。瞬間的な強さは「瞬間風速」と呼び分けられます。" },
+  { id:13, cat:"第6章", q:"地表付近の風の特性において、風速が「上空に比べて弱くなる」主な理由は何か？", opts:["地表面の摩擦を受けるため。", "地表面の熱により空気が膨張するため。", "地磁気の影響により空気分子の移動が制限されるため。"], ans:0, exp:"風は地面に近いほど、樹木や建物などの障害物（地表の粗度）による摩擦を受け、速度が低下します。" },
+  { id:14, cat:"第6章", q:"夏季の沿岸部において、日中に海から陸に向かって吹く局地的な風を何と呼ぶか？", opts:["陸風", "海風", "山風"], ans:1, exp:"日中は陸の方が海より早く温まり、陸上で上昇気流が起きて気圧が下がるため、海から陸に向かって「海風」が吹きます。" },
+  { id:15, cat:"第6章", q:"海陸風において、風が入れ替わる際の一時的な無風状態を何と呼ぶか？", opts:["ダウンバースト", "凪（なぎ）", "ビル風"], ans:1, exp:"海風と陸風が入れ替わる朝や夕方に、気温差が一時的に無くなり風が止まる現象を「凪（なぎ）」と呼びます。" },
+  { id:16, cat:"第6章", q:"山岳地帯において、日射で暖められた空気が谷を這い上がるように吹く風はどれか？", opts:["谷風", "山風", "おろし"], ans:0, exp:"昼間に山の斜面が太陽で温められると上昇気流が起き、谷から山頂へ向かって「谷風」が吹き上がります。夜間はその逆の「山風」となります。" },
+  { id:17, cat:"第6章", q:"高層ビルに風が当たった際、建物の背後（風下側）で発生する、複雑で乱れた空気の流れを何と呼ぶか？", opts:["剥離流", "上昇気流", "層流"], ans:0, exp:"ビルに当たった風が建物の角で分かれ、背後で渦を巻いたり急激に乱れたりする流れを「剥離流」と呼び、機体安定のハザードとなります。" },
+  { id:18, cat:"第6章", q:"積乱雲等から発生する強烈な下降気流が地表にぶつかり、四方に広がる現象を何と呼ぶか？", opts:["ビル風", "ダウンバースト", "カルマン渦"], ans:1, exp:"ダウンバーストは積乱雲からの極めて強力な下降気流で、地表に衝突してドーナツ状に広がり、無人航空機を地面に叩きつける危険があります。" },
+  { id:19, cat:"第6章", q:"ダウンバーストの中でも、直径が 4km 以下の小規模ながら極めて強烈なものを何と呼ぶか？", opts:["トルネード", "マイクロバースト", "シビアウェザー"], ans:1, exp:"ダウンバーストのうち、水平規模が 4km 以下のものをマイクロバーストと呼びます。規模は小さいですが、下降流は非常に強烈な場合があります。" },
+  { id:20, cat:"第6章", q:"寒冷前線が通過した際の、一般的な風向の変化と気温の推移はどれか？", opts:["南寄りの風から西・北西寄りの風に急変し、気温が下がる。", "北東の風から南寄りの風に変わり、気温が上がる。", "風向は変化せず、気温のみが急激に上昇する。"], ans:0, exp:"寒冷前線は冷たい空気が暖かい空気を押し上げながら進むため、通過後は風向が急変し、一気に気温が低下します。" },
+  { id:21, cat:"第6章", q:"温暖前線が接近してきた際の、雲の変化と雨の降り方の特徴はどれか？", opts:["積乱雲が発達し、短時間で激しい雷雨となる。", "層状の厚い雲が広がり、通過前には弱い雨が絶え間なく降る。", "雲は消滅し、通過直前まで快晴が続く。"], ans:1, exp:"温暖前線は暖かい空気が冷たい空気の上を這い上がるため、広い範囲に層状の雲ができ、長時間にわたって弱い雨を降らせます。" },
+  { id:22, cat:"第6章", q:"梅雨前線や秋雨前線のように、気団の勢力が拮抗してほぼ同じ位置に留まる前線を何と呼ぶか？", opts:["閉塞前線", "停滞前線", "寒冷前線"], ans:1, exp:"勢力が拮抗して動かない前線です。梅雨前線や秋雨前線が代表的で、長期間の雨や低い雲（視程障害）をもたらします。" },
+  { id:23, cat:"第6章", q:"10種雲形のうち、しゅう雨（にわか雨）性の断続的な降水を伴う傾向があるのはどの系統の雲か？", opts:["層雲系の雲", "積雲系の雲", "巻雲系の雲"], ans:1, exp:"積雲や積乱雲（積雲系）は垂直方向に発達するため、雨の降り方も断続的で激しい「にわか雨（しゅう雨）」になりやすいのが特徴です。" },
+  { id:24, cat:"第6章", q:"気温が低い環境下（冬季など）での運航において、バッテリーに関して特に注意すべき点はどれか？", opts:["化学反応が活発になり、過放電しやすくなる。", "放電能力が極端に低下し、飛行持続時間が大幅に短くなる可能性がある。", "電圧が上昇しすぎて、モーターが焼き付く恐れがある。"], ans:1, exp:"低温下ではLiPoバッテリー内の化学反応が鈍くなり、電圧降下が起きやすくなります。これにより飛行可能時間が急減し、墜落のリスクが高まります。" },
+  { id:25, cat:"第6章", q:"太陽光パネルやアスファルトが広がる場所を飛行させる際、気流に関して注意すべき現象はどれか？", opts:["地表面が暖められることによる「上昇気流」の発生。", "地磁気が乱れることによる「磁気嵐」の発生。", "空気が冷却されることによる「下降気流」の発生。"], ans:0, exp:"太陽光を吸収しやすい場所（黒いパネルやアスファルト）は熱を持ちやすく、その上の空気が温められて「上昇気流」が発生し、機体の高度維持に影響します。" },
+  { id:26, cat:"第6章", q:"飛行機（固定翼機）の運航において、離着陸時に原則として選択すべき風向はどれか？", opts:["追い風", "向かい風", "真横からの風"], ans:1, exp:"飛行機は翼に風を受けることで揚力を得ます。向かい風で離着陸することで、対地速度を抑えつつ十分な揚力を確保でき、安全性が高まります。" },
+  { id:27, cat:"第6章", q:"飛行機を「追い風」で着陸させた場合に想定される、重大な事故のリスクはどれか？", opts:["対地速度が速すぎて、滑走路を逸脱（オーバーラン）する危険。", "揚力が発生しすぎて、いつまでも接地できなくなる危険。", "機体が風に押し戻され、後退しながら接地する危険。"], ans:0, exp:"追い風では接地時の対地速度（地面に対する速さ）が速くなりすぎるため、ブレーキが間に合わず滑走路を飛び出す「オーバーラン」の危険があります。" },
+  { id:28, cat:"第6章", q:"飛行機が上空で待機する必要がある場合、どのような飛行を行うべきか？", opts:["その場でホバリング（空中停止）を行う。", "サークルを描くような旋回飛行を行う。", "エンジンを切って滑空し続ける。"], ans:1, exp:"飛行機は揚力を維持するために常に前進し続ける必要があります。その場に止まれないため、円を描くように旋回して待機します。" },
+  { id:29, cat:"第6章", q:"ヘリコプターにおいて、機体高度が「メインローター半径以下」になった際に顕著になる現象はどれか？", opts:["ボルテックス・リング・ステート", "地面効果", "オートローテーション"], ans:1, exp:"ローターの吹き下ろしが地面に当たって滞留し、空気の「座布団」のような効果で揚力が増す現象です。メインローター半径以下の高度で顕著です。" },
+  { id:30, cat:"第6章", q:"ヘリコプターの垂直降下時、自らの吹き下ろし気流に巻き込まれて揚力を失う現象を何と呼ぶか？", opts:["地面効果", "ボルテックス・リング・ステート（VRS）", "テールローター・ストール"], ans:1, exp:"垂直降下中に自分の乱気流を吸い込んでしまい、揚力を喪失する現象です。急激な高度低下を招き、回復が困難な非常に危険な状態です。" },
+  { id:31, cat:"第6章", q:"ボルテックス・リング・ステートを予防するための、効果的な降下方法はどれか？", opts:["さらに垂直にスロットルを下げて、素早く降下する。", "前進（水平移動）を組み合わせながら降下する。", "ローターの回転数を限界まで上げて降下する。"], ans:1, exp:"垂直に降りると自分の乱気流に入りやすいため、斜めに前進しながら（水平移動を加えながら）降下することで、VRS の発生を物理的に防げます。" },
+  { id:32, cat:"第6章", q:"ヘリコプターが動力を喪失しても、ローターの慣性等を利用して軟着陸できる機構を何と呼ぶか？", opts:["スワッシュプレート", "オートローテーション", "フェールセーフ"], ans:1, exp:"エンジン停止時に、落下する際の風の力でローターを「風車」のように回し、その回転エネルギーで最後に着陸時の揚力を生み出す技術です。" },
+  { id:33, cat:"第6章", q:"マルチローター（回転翼航空機）の離着陸において、周囲の物件から最低限離すべきとされる距離の目安はどれか？", opts:["10m以上", "30m以上", "100m以上"], ans:1, exp:"マルチローターであっても、安全確保のために周囲の物件（人・建物・車両）から 30m 以上の距離を保つことが原則とされています。" },
+  { id:34, cat:"第6章", q:"最大離陸重量 25kg 以上の「大型機」の運航特性として、正しいものはどれか？", opts:["慣性力が大きいため、加減速や昇降に要する時間と距離が長くなる。", "機体が重いため、風の影響を全く受けなくなる。", "音が非常に静かになるため、周囲への配慮が不要になる。"], ans:0, exp:"重量が大きい機体は慣性の影響を強く受けます。操作してから実際に機体が止まったり曲がったりするまでに、小型機以上の時間と距離を要します。" },
+  { id:35, cat:"第6章", q:"大型機の緊急着陸地点を選定する際、小型機と比較して考慮すべき点は何か？", opts:["アスファルト舗装がされていることが必須条件となる。", "慣性やサイズを考慮し、より広い範囲のエリアを確保する必要がある。", "電波干渉を受けやすいため、電波塔の近くは避ける。"], ans:1, exp:"大型機は慣性が大きく滑走距離も長くなる可能性があるため、緊急着陸の際にも小型機より広い障害物のないエリアが必要になります。" },
+  { id:36, cat:"第6章", q:"夜間飛行における「視認性」の確保について、必須とされる装備はどれか？", opts:["機体の姿勢及び方向が正確に視認できる灯火。", "操縦者が装着するナイトビジョン（暗視ゴーグル）。", "機体下部に取り付けた強力なサーチライト。"], ans:0, exp:"夜間は機体の向き（前後左右）が肉眼で判別できないため、灯火によって姿勢と方向を正確に確認できる装備が必須となります。" },
+  { id:37, cat:"第6章", q:"夜間飛行において、機体の「ビジョンセンサー」を利用する際の重大なリスクは何か？", opts:["センサーが赤外線を出しすぎて、機体が過熱する。", "暗所では周囲を正しく認識できず、衝突回避や姿勢安定機能が働かない可能性がある。", "夜間の電波ノイズにより、センサーの距離測定誤差が 10m 以上になる。"], ans:1, exp:"カメラ等の視覚情報を使うビジョンセンサーは、暗い場所では周囲の障害物や地面を認識できません。そのため、自動回避等の安全機能が効かない恐れがあります。" },
+  { id:38, cat:"第6章", q:"夜間飛行を行う際の「飛行範囲」の設定基準として適切なものはどれか？", opts:["機体の灯火が容易に認識できる範囲に限定する。", "操縦者の勘に頼り、灯火が見えなくなっても飛行を継続する。", "GNSS の信号が 10基以上受信できている範囲内とする。"], ans:0, exp:"夜間は距離感が掴みにくいため、機体の灯火がはっきりと目視でき、機体の位置や方向が確実に把握できる範囲内での飛行に限定すべきです。" },
+  { id:39, cat:"第6章", q:"目視外飛行において、補助者を配置「しない」場合に機体に求められる追加要件はどれか？", opts:["機体登録記号を 30cm 以上の巨大な文字で表示すること。", "地上において、機体の針路、姿勢、高度、速度及び周辺の気象状況等を把握できる装置。", "機体にスピーカーを装備し、常に警告音を鳴らし続けること。"], ans:1, exp:"補助者がいない場合、操縦者は自力で機体状況と周囲の気象を把握しなければなりません。そのため、テレメトリ情報（高度・速度・方位等）を表示できる装置が必要です。" },
+  { id:40, cat:"第6章", q:"補助者なし目視外飛行において、機体の安全性を証明するために必要な実績はどれか？", opts:["機体の初期故障期間を超えた、想定される運用に基づく十分な飛行実績。", "無風状態の室内での 100時間のホバリング実績。", "製造メーカーによる、墜落確率が 0% であるとの公式な保証。"], ans:0, exp:"補助者なし目視外飛行はリスクが高いため、機体には「初期故障期間（初期不良が出やすい期間）」を無事に超えた十分な運用実績が求められます。" },
+  { id:41, cat:"第6章", q:"目視外飛行のリスク軽減策として、飛行経路の選定基準として正しいものはどれか？", opts:["最短距離で目的地に到達できる、市街地の直上経路。", "山、海水域、河川、農用地など、第三者が存在する可能性が低い場所。", "常に鉄道や高速道路の真上を飛行させ、自機位置を特定しやすくする。"], ans:1, exp:"万一の墜落時の被害を最小限にするため、山、海、川、農地など、そもそも人がいない（第三者が存在する可能性が低い）場所を飛行経路に選びます。" },
+  { id:42, cat:"第6章", q:"補助者なし目視外飛行で、一時的に地表から 150m を超える高度を飛行させざるを得ない場合の対策はどれか？", opts:["航空機との衝突のおそれができる限り低い、山間部の谷間などを選定する。", "最高速度で一気に通過し、滞空時間を 10秒以内にする。", "有人航空機の操縦士に、無線で直接退避を命じる。"], ans:0, exp:"150m 以上は有人航空機の空域です。やむを得ず飛行させる場合は、航空機が飛んでくる可能性が低い「谷間」などを利用し、空中衝突リスクを下げます。" },
+  { id:43, cat:"第6章", q:"目視外飛行において、立入管理区画を設定した場合の「周知方法」として適切なものはどれか？", opts:["操縦者が大きな声で周囲に知らせる。", "看板の設置や、インターネット・ポスター等により問い合わせ先を明示して周知する。", "付近の住民一人ひとりに、実印による同意書をもらう。"], ans:1, exp:"第三者が不用意に立ち入らないよう、看板だけでなくインターネット等も活用して、広く社会に飛行の事実と連絡先を周知することが求められます。" },
+  { id:44, cat:"第6章", q:"カテゴリーIII飛行のリスク評価手法として、JARUS の SORA を参考に作成され活用が推奨されているガイドラインはどれか？", opts:["安全確保措置検討のための無人航空機の運航リスク評価ガイドライン", "無人航空機事故・重大インシデント報告要領", "航空法に基づく特定飛行の審査基準"], ans:0, exp:"カテゴリーIII（レベル4）飛行の許可申請において、国際的な基準（JARUS SORA）に基づくリスク評価を行うための推奨ガイドラインです。" },
+  { id:45, cat:"第6章", q:"リスク評価における「SAIL (Safety and Assurance Level)」は何に基づいて決定されるか？", opts:["操縦者の年齢と、機体の購入価格。", "地上リスククラスと、空中リスククラスの組み合わせ。", "当日の湿度と、最大風速の予測値。"], ans:1, exp:"地上リスク（人への被害）と空中リスク（航空機への衝突）の判定結果を掛け合わせて、その飛行の安全目標レベルである SAIL が決まります。" },
+  { id:46, cat:"第6章", q:"リスク評価ガイドラインの「セマンティックモデル」において、異常事態が発生した際に復旧のために確保しておく空間を何と呼ぶか？", opts:["想定飛行空間", "想定外飛行空間", "オペレーション空間"], ans:1, exp:"通常の「想定飛行空間」を外れてしまった際に、異常対応手順を行って機体を復旧させるために予備として確保しておく空間です。" },
+  { id:47, cat:"第6章", q:"リスク評価における「ロバスト性」の定義として、正しい組み合わせはどれか？", opts:["安全性の水準（安全性の増加）と、保証の水準（証明の方法）。", "機体の頑丈さと、バッテリーの持続時間の長さ。", "補助者の視力の良さと、通信距離の長さ。"], ans:0, exp:"対策によってどれだけ安全性が高まるか（水準）と、その対策が確実に実行されることがどう証明されているか（保証）の強さを指します。" },
+  { id:48, cat:"第6章", q:"カテゴリーIII飛行のリスク軽減策として、飛行マニュアルに記載すべき「点検・整備」の重要事項はどれか？", opts:["整備の実施・責任体制の明確化。", "機体を美しく保つためのワックスがけの手順。", "故障した際に、自分たちだけで基板を修理する方法。"], ans:0, exp:"カテゴリーIIIでは、誰が、いつ、どのように機体を整備し、その責任を負うのかという体制（責任体制）を明確にマニュアル化することが義務的です。" },
+  { id:49, cat:"第6章", q:"飛行計画の作成において、地上風速だけでなく「上空の風速」を確認するために利用が推奨されるものはどれか？", opts:["地上にある吹き流しの動きの観察。", "気象アプリや上空風予報などのツール。", "操縦者の指をなめて風を感じる方法。"], ans:1, exp:"地上では無風でも、高度 100m では強風が吹いていることが多々あります。気象アプリ等で上空の風速を事前に予測し、運用限界内か判断します。" },
+  { id:50, cat:"第6章", q:"運航リスク管理の基本的なプロセスにおいて、操縦者が持つべき「勇気」として教則が強調しているのはどれか？", opts:["機体故障の予兆があっても、最後まで飛行をやり遂げる勇気。", "天候悪化や機体異常を感じた際、計画の中止や帰還を決定する勇気。", "補助者の警告を無視して、自分の操縦技能を過信する勇気。"], ans:1, exp:"教則では「危険な状況を乗り切る技術よりも、危険を事前に察知して回避（中止・帰還）することの方が、操縦者としてより大切である」と明記されています。" },
+];
+
+// State
+let currentQuestions = [];
+let currentIndex = 0;
+let score = 0;
+let answered = false;
+let userAnswers = [];
+let lastMode = 'all';
+let sessionWrongIds = []; // wrong question IDs from current modal
+
+// ===== STORAGE HELPERS =====
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem('drone_history') || '[]'); } catch { return []; }
+}
+function saveHistory(h) { localStorage.setItem('drone_history', JSON.stringify(h)); }
+
+function getQStats() {
+  try { return JSON.parse(localStorage.getItem('drone_qstats') || '{}'); } catch { return {}; }
+}
+function saveQStats(s) { localStorage.setItem('drone_qstats', JSON.stringify(s)); }
+
+function getModeName(mode) {
+  const map = { all:'全問題(250問)', rand:'ランダム25問', cat1:'第1・2章', cat2:'第3章', cat3:'第4章', cat4:'第5章', cat5:'第6章', weak:'苦手問題', custom:'選択問題' };
+  return map[mode] || mode;
+}
+
+// ===== SAVE / RESUME =====
+function getSaveData() {
+  try { return JSON.parse(localStorage.getItem('drone_save') || 'null'); } catch { return null; }
+}
+function deleteSaveData() { localStorage.removeItem('drone_save'); }
+
+function saveCurrentProgress() {
+  if (!currentQuestions.length) return;
+  const data = {
+    mode: lastMode,
+    questionKeys: currentQuestions.map(q => `${q.cat}__${q.id}`),
+    currentIndex,
+    score,
+    userAnswers,
+    savedAt: new Date().toLocaleString('ja-JP', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }),
+  };
+  localStorage.setItem('drone_save', JSON.stringify(data));
+  showSaveIndicator();
+}
+
+function showSaveIndicator() {
+  const el = document.getElementById('saveIndicator');
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 1800);
+}
+
+function renderResumePanel() {
+  const save = getSaveData();
+  const panel = document.getElementById('resumePanel');
+  if (!save) { panel.style.display = 'none'; return; }
+
+  const keys = save.questionKeys || save.questionIds || [];
+  const answered = save.userAnswers.filter(a => a !== null).length;
+  const total = keys.length;
+  const pct = Math.round((answered / total) * 100);
+
+  panel.style.display = 'block';
+  document.getElementById('resumeMeta').innerHTML =
+    `📚 ${getModeName(save.mode)} &nbsp;｜&nbsp; ⏱ ${save.savedAt}<br>` +
+    `<span style="color:var(--accent);font-weight:700">${answered}/${total}問</span> 回答済み（正解 ${save.score}問）`;
+  document.getElementById('resumeProgressFill').style.width = pct + '%';
+}
+
+function resumeQuiz() {
+  const save = getSaveData();
+  if (!save) return;
+
+  // Build lookup: "cat__id" -> question object
+  const keyMap = Object.fromEntries(QUESTIONS.map(q => [`${q.cat}__${q.id}`, q]));
+  const keys = save.questionKeys || save.questionIds || [];
+  currentQuestions = keys.map(k => keyMap[k] || keyMap[k]).filter(Boolean);
+  score = save.score;
+  userAnswers = save.userAnswers;
+  lastMode = save.mode;
+  answered = false;
+
+  const nextUnanswered = save.userAnswers.findIndex(a => a === null);
+  currentIndex = nextUnanswered >= 0 ? nextUnanswered : save.currentIndex;
+
+  show('quizScreen');
+  renderQuestion();
+  showToast(`Q${currentIndex + 1}から再開します`);
+}
+
+function discardSave() {
+  if (!confirm('保存中のデータを削除して最初からやり直しますか？')) return;
+  deleteSaveData();
+  renderResumePanel();
+  loadStats();
+  showToast('セーブデータを削除しました');
+}
+
+function exitQuizWithSave() {
+  const hasProgress = currentQuestions.length > 0 && userAnswers.some(a => a !== null);
+  if (hasProgress) {
+    saveCurrentProgress();
+    showToast('進捗をセーブしました。ホームから続きを再開できます');
+  }
+  show('startScreen');
+  loadStats();
+}
+
+// ===== LOAD STATS FOR HOME =====
+const BEST_MODES = [
+  { key: 'all',  label: '全問題\n(250問)' },
+  { key: 'cat1', label: '第1・2章' },
+  { key: 'cat2', label: '第3章' },
+  { key: 'cat3', label: '第4章' },
+  { key: 'cat4', label: '第5章' },
+  { key: 'cat5', label: '第6章' },
+  { key: 'rand', label: 'ランダム\n25問' },
+];
+
+function getBestScores() {
+  try { return JSON.parse(localStorage.getItem('drone_best_scores') || '{}'); } catch { return {}; }
+}
+function saveBestScores(s) { localStorage.setItem('drone_best_scores', JSON.stringify(s)); }
+
+function loadStats() {
+  const hist = getHistory();
+  document.getElementById('attemptCount').textContent = hist.length;
+  renderBestScoresGrid();
+  renderWeakPanel();
+  renderResumePanel();
+}
+
+function renderBestScoresGrid() {
+  const bests = getBestScores();
+  const grid = document.getElementById('bestScoresGrid');
+  grid.innerHTML = '';
+
+  BEST_MODES.forEach(m => {
+    const data = bests[m.key];
+    const card = document.createElement('div');
+    card.className = 'best-score-card' + (data ? ' has-score' : '');
+
+    let color = 'var(--text-dim)';
+    if (data) {
+      color = data.pct >= 80 ? 'var(--correct)' : data.pct >= 60 ? 'var(--accent)' : 'var(--incorrect)';
+    }
+
+    card.innerHTML = `
+      <div class="best-score-val ${data ? '' : 'no-data'}" style="${data ? 'color:' + color : ''}">
+        ${data ? data.pct + '%' : '—'}
+      </div>
+      <div class="best-score-mode">${m.label.replace('\n', '<br>')}</div>
+      ${data ? `<div class="best-score-attempts">${data.attempts}回挑戦</div>` : ''}
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function renderWeakPanel() {
+  const qstats = getQStats();
+  const weakIds = getWeakQuestionIds(qstats, 5);
+  const panel = document.getElementById('weakPanel');
+  if (weakIds.length === 0) { panel.style.display = 'none'; return; }
+
+  panel.style.display = 'block';
+  document.getElementById('weakPanelSub').textContent = `過去の挑戦で間違えた問題が ${weakIds.length} 問あります。集中的に復習しましょう。`;
+
+  const pills = document.getElementById('weakPills');
+  pills.innerHTML = '';
+  weakIds.slice(0, 15).forEach(key => {
+    const [cat, id] = key.split('__');
+    const el = document.createElement('span');
+    el.className = 'weak-pill-item';
+    el.textContent = `${cat} 問${id}`;
+    pills.appendChild(el);
+  });
+  if (weakIds.length > 15) {
+    const more = document.createElement('span');
+    more.className = 'weak-pill-item';
+    more.style.opacity = '0.6';
+    more.textContent = `+${weakIds.length - 15}問`;
+    pills.appendChild(more);
+  }
+}
+
+function getWeakQuestionIds(qstats, minAttempts) {
+  // Returns composite keys "cat__id" for questions with accuracy < 70%
+  return Object.entries(qstats)
+    .filter(([key, s]) => s.attempts >= minAttempts && (s.correct / s.attempts) < 0.7)
+    .sort((a, b) => (a[1].correct / a[1].attempts) - (b[1].correct / b[1].attempts))
+    .map(([key]) => key);
+}
+
+function getAllWeakIds(qstats) {
+  // Returns composite keys "cat__id" for questions answered wrong at least once
+  return Object.entries(qstats)
+    .filter(([key, s]) => s.wrong > 0)
+    .sort((a, b) => {
+      const ra = a[1].correct / (a[1].attempts || 1);
+      const rb = b[1].correct / (b[1].attempts || 1);
+      return ra - rb;
+    })
+    .map(([key]) => key);
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ===== QUIZ LOGIC =====
+function startQuiz(mode, specificIds) {
+  lastMode = mode;
+  let pool;
+
+  if (specificIds) {
+    pool = QUESTIONS.filter(q => specificIds.includes(q.id));
+  } else if (mode === 'all') {
+    pool = [...QUESTIONS];
+  } else if (mode === 'rand') {
+    pool = shuffle(QUESTIONS).slice(0, 25);
+  } else if (mode === 'cat1') {
+    pool = QUESTIONS.filter(q => q.cat === '第1・2章');
+  } else if (mode === 'cat2') {
+    pool = QUESTIONS.filter(q => q.cat === '第3章');
+  } else if (mode === 'cat3') {
+    pool = QUESTIONS.filter(q => q.cat === '第4章');
+  } else if (mode === 'cat4') {
+    pool = QUESTIONS.filter(q => q.cat === '第5章');
+  } else if (mode === 'cat5') {
+    pool = QUESTIONS.filter(q => q.cat === '第6章');
+  } else if (mode === 'weak') {
+    const qstats = getQStats();
+    const weakKeys = getAllWeakIds(qstats);
+    pool = QUESTIONS.filter(q => weakKeys.includes(`${q.cat}__${q.id}`));
+    if (pool.length === 0) {
+      showToast('苦手問題のデータがありません。まず通常モードで挑戦してください。');
+      return;
+    }
+  }
+
+  currentQuestions = shuffle(pool);
+  currentIndex = 0;
+  score = 0;
+  userAnswers = new Array(currentQuestions.length).fill(null);
+  answered = false;
+
+  show('quizScreen');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = currentQuestions[currentIndex];
+  const total = currentQuestions.length;
+
+  document.getElementById('qCounter').textContent = `Q${currentIndex + 1} / ${total}`;
+  document.getElementById('progressFill').style.width = ((currentIndex / total) * 100) + '%';
+  document.getElementById('scoreBadge').textContent = `✓ ${score}`;
+  document.getElementById('categoryTag').textContent = q.cat;
+  document.getElementById('questionText').textContent = `問${q.id}｜${q.q}`;
+  // q.id is now 1-50 within each chapter
+  document.getElementById('explanationBox').style.display = 'none';
+  document.getElementById('nextBtn').style.display = 'none';
+  answered = false;
+
+  const letters = ['A', 'B', 'C'];
+  const container = document.getElementById('optionsContainer');
+  container.innerHTML = '';
+
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="option-letter">${letters[i]}</span><span>${opt}</span>`;
+    btn.onclick = () => selectAnswer(i, btn);
+    container.appendChild(btn);
+  });
+
+  const card = document.getElementById('questionCard');
+  card.style.animation = 'none';
+  card.offsetHeight;
+  card.style.animation = '';
+}
+
+function selectAnswer(idx, btn) {
+  if (answered) return;
+  answered = true;
+
+  const q = currentQuestions[currentIndex];
+  userAnswers[currentIndex] = idx;
+  const isCorrect = idx === q.ans;
+  if (isCorrect) score++;
+
+  // Update per-question stats (key = "cat__id" to avoid collisions across chapters)
+  const qstats = getQStats();
+  const qkey = `${q.cat}__${q.id}`;
+  if (!qstats[qkey]) qstats[qkey] = { cat: q.cat, id: q.id, attempts: 0, correct: 0, wrong: 0 };
+  qstats[qkey].attempts++;
+  if (isCorrect) qstats[qkey].correct++;
+  else qstats[qkey].wrong++;
+  saveQStats(qstats);
+
+  const btns = document.querySelectorAll('.option-btn');
+  btns.forEach((b, i) => {
+    b.disabled = true;
+    if (i === q.ans) b.classList.add('correct');
+    else if (i === idx && !isCorrect) b.classList.add('incorrect');
+  });
+
+  const expBox = document.getElementById('explanationBox');
+  expBox.style.display = 'block';
+  expBox.innerHTML = `
+    <div class="result-indicator ${isCorrect ? 'ok' : 'ng'}">
+      ${isCorrect ? '✅ 正解！' : '❌ 不正解'}
+    </div>
+    <strong>解説：</strong>${q.exp}
+  `;
+
+  document.getElementById('scoreBadge').textContent = `✓ ${score}`;
+
+  // Auto-save progress after every answer
+  saveCurrentProgress();
+
+  if (currentIndex < currentQuestions.length - 1) {
+    document.getElementById('nextBtn').style.display = 'inline-flex';
+    document.getElementById('nextBtn').textContent = '次の問題 →';
+  } else {
+    document.getElementById('nextBtn').style.display = 'inline-flex';
+    document.getElementById('nextBtn').textContent = '結果を見る 📊';
+  }
+}
+
+function nextQuestion() {
+  if (currentIndex < currentQuestions.length - 1) {
+    currentIndex++;
+    renderQuestion();
+  } else {
+    showResult();
+  }
+}
+
+function showResult() {
+  // Quiz finished — clear the save
+  deleteSaveData();
+
+  show('resultScreen');
+  const total = currentQuestions.length;
+  const pct = Math.round((score / total) * 100);
+
+  // Save to history — use "cat__id" composite keys
+  const wrongIds = currentQuestions
+    .filter((q, i) => userAnswers[i] !== q.ans)
+    .map(q => `${q.cat}__${q.id}`);
+
+  const hist = getHistory();
+  hist.unshift({
+    id: Date.now(),
+    date: new Date().toLocaleString('ja-JP', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }),
+    mode: lastMode,
+    modeName: getModeName(lastMode),
+    total,
+    score,
+    pct,
+    wrongIds,
+    questionKeys: currentQuestions.map(q => `${q.cat}__${q.id}`)
+  });
+  if (hist.length > 50) hist.pop();
+  saveHistory(hist);
+
+  // Update per-mode best score
+  const bests = getBestScores();
+  const modeKey = ['all','cat1','cat2','cat3','cat4','cat5','rand'].includes(lastMode) ? lastMode : null;
+  if (modeKey) {
+    if (!bests[modeKey]) bests[modeKey] = { pct: 0, attempts: 0 };
+    bests[modeKey].attempts++;
+    if (pct > bests[modeKey].pct) bests[modeKey].pct = pct;
+    saveBestScores(bests);
+  }
+
+  loadStats();
+
+  document.getElementById('resCorrect').textContent = score;
+  document.getElementById('resIncorrect').textContent = total - score;
+  document.getElementById('resTotal').textContent = total;
+
+  const circ = document.getElementById('resultCircle');
+  const circumference = 502;
+  const offset = circumference - (pct / 100) * circumference;
+
+  circ.style.stroke = pct >= 80 ? 'var(--correct)' : pct >= 60 ? 'var(--accent)' : 'var(--incorrect)';
+  setTimeout(() => { circ.style.strokeDashoffset = offset; }, 100);
+
+  let anim = 0;
+  const step = () => {
+    if (anim < pct) {
+      anim++;
+      document.getElementById('resultPct').textContent = anim + '%';
+      setTimeout(step, 20);
+    }
+  };
+  step();
+
+  let grade, sub, color;
+  if (pct >= 90) { grade = '🏆 優秀！'; sub = '素晴らしい成績です！合格圏内です。'; color = 'var(--correct)'; }
+  else if (pct >= 70) { grade = '✈️ 合格圏内'; sub = '良好な成績です。苦手分野を復習しましょう。'; color = 'var(--accent)'; }
+  else if (pct >= 50) { grade = '📚 もう少し'; sub = '基礎を固めて再挑戦しましょう。'; color = 'var(--warn)'; }
+  else { grade = '🔄 要復習'; sub = '各編の解説をしっかり確認しましょう。'; color = 'var(--incorrect)'; }
+
+  const gradeEl = document.getElementById('gradeText');
+  gradeEl.style.color = color;
+  gradeEl.textContent = grade;
+  document.getElementById('gradeSub').textContent = sub;
+}
+
+function showReview() {
+  show('reviewScreen');
+  const content = document.getElementById('reviewContent');
+  content.innerHTML = '';
+
+  currentQuestions.forEach((q, i) => {
+    const ua = userAnswers[i];
+    const isCorrect = ua === q.ans;
+    const letters = ['A', 'B', 'C'];
+
+    const card = document.createElement('div');
+    card.className = `review-card ${isCorrect ? 'right' : 'wrong'}`;
+    card.innerHTML = `
+      <div class="review-q-num">${q.cat} / 問${q.id}</div>
+      <div class="review-q-text">${q.q}</div>
+      <div class="review-answers">
+        ${!isCorrect ? `<div class="review-your-answer">あなたの答え：${ua !== null ? letters[ua] + '. ' + q.opts[ua] : '未回答'}</div>` : ''}
+        <div class="review-correct-answer">✅ 正解：${letters[q.ans]}. ${q.opts[q.ans]}</div>
+      </div>
+      <div class="review-explanation">${q.exp}</div>
+    `;
+    content.appendChild(card);
+  });
+}
+
+// ===== HISTORY SCREEN =====
+function showHistory() {
+  show('historyScreen');
+  renderHistoryList();
+  renderWeakAnalysis();
+}
+
+function switchHistoryTab(tab, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('historyTabList').classList.toggle('active', tab === 'list');
+  document.getElementById('historyTabWeak').classList.toggle('active', tab === 'weak');
+}
+
+function renderHistoryList() {
+  const hist = getHistory();
+  const container = document.getElementById('historyList');
+
+  if (hist.length === 0) {
+    container.innerHTML = `<div class="history-empty">📭 まだ挑戦履歴がありません<br>クイズに挑戦すると<br>ここに記録されます</div>`;
+    return;
+  }
+
+  container.innerHTML = '';
+  hist.forEach(h => {
+    const pctColor = h.pct >= 80 ? 'var(--correct)' : h.pct >= 60 ? 'var(--accent)' : 'var(--incorrect)';
+    const card = document.createElement('div');
+    card.className = 'history-card';
+    card.onclick = () => openHistoryDetail(h);
+
+    const pillsHtml = h.wrongIds.slice(0, 12).map(key => {
+      const parts = key.split('__');
+      const label = parts.length === 2 ? `${parts[0]} 問${parts[1]}` : `問${key}`;
+      return `<span class="wrong-pill">${label}</span>`;
+    }).join('');
+    const morePills = h.wrongIds.length > 12 ? `<span class="wrong-pill more">+${h.wrongIds.length - 12}</span>` : '';
+
+    card.innerHTML = `
+      <div class="history-card-top">
+        <div>
+          <div class="history-date">${h.date}</div>
+        </div>
+        <div class="history-pct" style="color:${pctColor}">${h.pct}%</div>
+      </div>
+      <div class="history-meta">
+        <span>📚 ${h.modeName}</span>
+        <span>✅ ${h.score}/${h.total}問正解</span>
+        ${h.wrongIds.length > 0 ? `<span>❌ ${h.wrongIds.length}問ミス</span>` : '<span>🎉 全問正解</span>'}
+      </div>
+      ${h.wrongIds.length > 0 ? `<div class="history-wrong-pills">${pillsHtml}${morePills}</div>` : ''}
+    `;
+    container.appendChild(card);
+  });
+}
+
+function renderWeakAnalysis() {
+  const qstats = getQStats();
+  const container = document.getElementById('weakAnalysis');
+
+  const attempted = Object.keys(qstats);
+  if (attempted.length === 0) {
+    container.innerHTML = `<div class="history-empty">📊 問題ごとの分析は<br>クイズに挑戦すると<br>表示されます</div>`;
+    return;
+  }
+
+  const weakIds = getAllWeakIds(qstats);
+  const masterIds = Object.entries(qstats)
+    .filter(([key, s]) => s.attempts >= 3 && s.correct === s.attempts)
+    .map(([key]) => key);
+
+  container.innerHTML = '';
+
+  // Summary
+  const summary = document.createElement('div');
+  summary.className = 'stat-card';
+  summary.style.cssText = 'margin-bottom:16px;';
+  summary.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center">
+      <div><div class="stat-num" style="font-size:24px">${attempted.length}</div><div class="stat-label">挑戦済み問題</div></div>
+      <div><div class="stat-num" style="font-size:24px;color:var(--incorrect)">${weakIds.length}</div><div class="stat-label">苦手問題</div></div>
+      <div><div class="stat-num" style="font-size:24px;color:var(--correct)">${masterIds.length}</div><div class="stat-label">完璧な問題</div></div>
+    </div>
+  `;
+  container.appendChild(summary);
+
+  if (weakIds.length > 0) {
+    const weakSection = document.createElement('div');
+    weakSection.style.marginBottom = '16px';
+    weakSection.innerHTML = `<div class="section-label" style="margin-bottom:10px">🔥 正答率の低い問題</div>`;
+
+    const list = document.createElement('div');
+    list.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
+
+    weakIds.slice(0, 20).forEach(key => {
+      const s = qstats[key];
+      const [cat, qid] = key.split('__');
+      const pct = Math.round((s.correct / s.attempts) * 100);
+      const q = QUESTIONS.find(q => q.cat === cat && String(q.id) === qid);
+      const item = document.createElement('div');
+      item.style.cssText = 'background:var(--card);border:1px solid var(--card-border);border-radius:8px;padding:12px 14px;';
+      item.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-family:Space Mono,monospace;font-size:11px;color:var(--text-dim)">${cat} / 問${qid}</span>
+          <span style="font-family:Space Mono,monospace;font-size:13px;color:${pct < 50 ? 'var(--incorrect)' : 'var(--warn)'};font-weight:700">${pct}%</span>
+        </div>
+        <div style="font-size:12px;line-height:1.5;color:var(--text-dim);margin-bottom:8px">${q ? q.q.slice(0, 60) + (q.q.length > 60 ? '…' : '') : ''}</div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--text-dim);margin-bottom:6px">
+          <span>${s.attempts}回挑戦</span>
+          <span style="color:var(--correct)">✓ ${s.correct}回正解</span>
+          <span style="color:var(--incorrect)">✗ ${s.wrong}回不正解</span>
+        </div>
+        <div class="accuracy-bar"><div class="accuracy-fill" style="width:${pct}%;background:${pct < 50 ? 'var(--incorrect)' : 'var(--warn)'}"></div></div>
+      `;
+      list.appendChild(item);
+    });
+
+    weakSection.appendChild(list);
+    container.appendChild(weakSection);
+
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-primary';
+    btn.style.width = '100%';
+    btn.textContent = '💪 苦手問題を集中練習';
+    btn.onclick = () => startQuiz('weak');
+    container.appendChild(btn);
+  } else {
+    const ok = document.createElement('div');
+    ok.className = 'history-empty';
+    ok.innerHTML = '🎉 現時点で苦手問題はありません！<br>引き続き練習を続けましょう。';
+    container.appendChild(ok);
+  }
+}
+
+function openHistoryDetail(h) {
+  sessionWrongIds = h.wrongIds;
+  const modal = document.getElementById('historyDetailModal');
+  modal.style.display = 'flex';
+
+  document.getElementById('modalTitle').textContent = `${h.date} — ${h.modeName}`;
+
+  const allQs = QUESTIONS.filter(q => h.questionIds.includes(q.id));
+  const letters = ['A', 'B', 'C'];
+
+  let html = `
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;text-align:center">
+      <div style="background:var(--card);border-radius:8px;padding:12px">
+        <div style="font-family:Space Mono,monospace;font-size:22px;font-weight:700;color:${h.pct >= 80 ? 'var(--correct)' : h.pct >= 60 ? 'var(--accent)' : 'var(--incorrect)'}">${h.pct}%</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:4px">正解率</div>
+      </div>
+      <div style="background:var(--card);border-radius:8px;padding:12px">
+        <div style="font-family:Space Mono,monospace;font-size:22px;font-weight:700;color:var(--correct)">${h.score}</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:4px">正解</div>
+      </div>
+      <div style="background:var(--card);border-radius:8px;padding:12px">
+        <div style="font-family:Space Mono,monospace;font-size:22px;font-weight:700;color:var(--incorrect)">${h.wrongIds.length}</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:4px">不正解</div>
+      </div>
+    </div>
+  `;
+
+  if (h.wrongIds.length > 0) {
+    html += `<div style="font-size:12px;color:var(--text-dim);letter-spacing:2px;text-transform:uppercase;font-family:Space Mono,monospace;margin-bottom:10px">❌ 間違えた問題</div>`;
+    html += `<div class="detail-q-list">`;
+    h.wrongIds.forEach(id => {
+      const q = QUESTIONS.find(q => q.id === id);
+      if (!q) return;
+      html += `
+        <div class="detail-q-item wrong-item">
+          <span class="detail-q-icon">❌</span>
+          <div>
+            <div style="font-size:11px;color:var(--text-dim);margin-bottom:3px">問${q.id} / ${q.cat}</div>
+            <div style="font-size:12px;line-height:1.5">${q.q.slice(0, 80)}${q.q.length > 80 ? '…' : ''}</div>
+            <div style="font-size:11px;color:var(--correct);margin-top:4px">✅ 正解：${letters[q.ans]}. ${q.opts[q.ans].slice(0, 40)}${q.opts[q.ans].length > 40 ? '…' : ''}</div>
+          </div>
+        </div>
+      `;
+    });
+    html += `</div>`;
+  } else {
+    html += `<div style="text-align:center;color:var(--correct);padding:20px;font-size:14px">🎉 全問正解！</div>`;
+  }
+
+  document.getElementById('modalContent').innerHTML = html;
+
+  const retryBtn = document.getElementById('modalRetryBtn');
+  if (h.wrongIds.length > 0) {
+    retryBtn.style.display = 'block';
+    retryBtn.textContent = `この回の間違い ${h.wrongIds.length} 問を復習する`;
+    retryBtn.onclick = () => {
+      closeDetailModal();
+      startQuiz('custom', h.wrongIds);
+    };
+  } else {
+    retryBtn.style.display = 'none';
+  }
+}
+
+function closeDetailModal() {
+  document.getElementById('historyDetailModal').style.display = 'none';
+}
+
+function closeModal(e) {
+  if (e.target.id === 'historyDetailModal') closeDetailModal();
+}
+
+function restartQuiz() {
+  startQuiz(lastMode);
+}
+
+function exitQuiz() {
+  show('startScreen');
+}
+
+function goHome() {
+  show('startScreen');
+}
+
+function show(id) {
+  ['startScreen','quizScreen','resultScreen','reviewScreen','historyScreen'].forEach(s => {
+    const el = document.getElementById(s);
+    el.style.display = 'none';
+    el.style.flexDirection = '';
+  });
+  const target = document.getElementById(id);
+  target.style.display = 'flex';
+  target.style.flexDirection = 'column';
+  window.scrollTo(0, 0);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Init
+loadStats();
+show('startScreen');
+
+// ===== PWA: Service Worker 登録 =====
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('SW registered:', reg.scope))
+      .catch(err => console.log('SW registration failed:', err));
+  });
+}
+
+// ===== PWA: ホーム画面追加バナー =====
+let deferredPrompt = null;
+const installBanner = document.getElementById('installBanner');
+const installBtn = document.getElementById('installBtn');
+const installDismiss = document.getElementById('installDismiss');
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // 初回訪問から3秒後に表示（すぐ出ると邪魔なため）
+  setTimeout(() => {
+    if (installBanner) installBanner.style.transform = 'translateY(0)';
+  }, 3000);
+});
+
+if (installBtn) {
+  installBtn.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    if (installBanner) installBanner.style.transform = 'translateY(120px)';
+  });
+}
+
+if (installDismiss) {
+  installDismiss.addEventListener('click', () => {
+    if (installBanner) installBanner.style.transform = 'translateY(120px)';
+  });
+}
+
+// インストール済み（standalone）の場合はバナーを非表示
+if (window.matchMedia('(display-mode: standalone)').matches) {
+  if (installBanner) installBanner.style.display = 'none';
+}
+</script>
+</body>
+</html>
